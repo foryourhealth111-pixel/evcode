@@ -20,7 +20,11 @@ def remove_path(path: Path) -> None:
     if path.is_symlink() or path.is_file():
         path.unlink()
     else:
-        shutil.rmtree(path)
+        try:
+            shutil.rmtree(path)
+        except PermissionError:
+            quarantine_path = path.with_name(f"{path.name}.stale-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}")
+            path.rename(quarantine_path)
 
 
 def run(cmd: list[str], cwd: Path, capture_output: bool = True) -> subprocess.CompletedProcess[str]:

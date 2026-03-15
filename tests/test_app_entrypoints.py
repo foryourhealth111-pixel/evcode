@@ -143,6 +143,66 @@ requires_openai_auth = true
             self.assertEqual(["--version"], payload["argv"])
             self.assertEqual("standard", payload["evcode_channel"])
 
+    def test_benchmark_entrypoint_auto_adopts_source_codex_home_and_bundled_host(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            stub = make_stub_host(tempdir)
+            source_codex_home = Path(tempdir) / "source-codex-home"
+            source_codex_home.mkdir(parents=True, exist_ok=True)
+            (source_codex_home / "config.toml").write_text(
+                """
+model_provider = "rightcode"
+model = "gpt-5.4"
+
+[model_providers.rightcode]
+base_url = "https://right.codes/codex/v1"
+wire_api = "responses"
+requires_openai_auth = true
+""".strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            (source_codex_home / "auth.json").write_text('{"OPENAI_API_KEY":"test-key"}\n', encoding="utf-8")
+            subprocess.run(
+                [
+                    "python3",
+                    str(REPO_ROOT / "scripts" / "build" / "assemble_distribution.py"),
+                    "--channel",
+                    "benchmark",
+                    "--output-root",
+                    tempdir,
+                    "--host-binary",
+                    "missing-codex-host",
+                    "--bundled-host-binary",
+                    str(stub),
+                    "--source-codex-home",
+                    str(source_codex_home),
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            completed = subprocess.run(
+                ["node", str(REPO_ROOT / "apps" / "evcode-bench" / "bin" / "evcode-bench.js"), "native", "--version"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+                env={
+                    **os.environ,
+                    "EVCODE_DIST_OUTPUT_ROOT": tempdir,
+                    "EVCODE_SOURCE_CODEX_HOME": str(source_codex_home),
+                },
+            )
+            payload = json.loads(completed.stdout)
+            self.assertEqual(["--version"], payload["argv"])
+            self.assertEqual("benchmark_autonomous", payload["evcode_mode"])
+            self.assertEqual("benchmark", payload["evcode_channel"])
+            assembled_config = (Path(tempdir) / "benchmark" / "codex-home" / "config.toml").read_text(encoding="utf-8")
+            self.assertIn('model_provider = "rightcode"', assembled_config)
+            self.assertIn('model = "gpt-5.4"', assembled_config)
+            self.assertTrue((Path(tempdir) / "benchmark" / "codex-home" / "auth.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

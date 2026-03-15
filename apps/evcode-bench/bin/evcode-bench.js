@@ -8,6 +8,45 @@ function loadJson(root, relativePath) {
   return JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
 }
 
+function resolveSourceCodexHome() {
+  const configured = process.env.EVCODE_SOURCE_CODEX_HOME || process.env.CODEX_HOME;
+  if (configured && fs.existsSync(path.join(configured, "config.toml"))) {
+    return configured;
+  }
+  const fallback = path.join(os.homedir(), ".codex");
+  if (fs.existsSync(path.join(fallback, "config.toml"))) {
+    return fallback;
+  }
+  return null;
+}
+
+function resolveBundledHost(root) {
+  const candidate = path.join(root, ".evcode-build", "host", "codex");
+  return fs.existsSync(candidate) ? candidate : null;
+}
+
+function buildAssemblyArgs(root, passthroughArgs = []) {
+  const args = [
+    path.join(root, "scripts", "build", "assemble_distribution.py"),
+    "--channel",
+    "benchmark",
+    ...passthroughArgs
+  ];
+  if (!passthroughArgs.includes("--source-codex-home")) {
+    const sourceCodexHome = resolveSourceCodexHome();
+    if (sourceCodexHome) {
+      args.push("--source-codex-home", sourceCodexHome);
+    }
+  }
+  if (!passthroughArgs.includes("--bundled-host-binary")) {
+    const bundledHost = resolveBundledHost(root);
+    if (bundledHost) {
+      args.push("--bundled-host-binary", bundledHost);
+    }
+  }
+  return args;
+}
+
 function status(root) {
   const distributions = loadJson(root, "config/distributions.json");
   const runtime = loadJson(root, "config/runtime-contract.json");
@@ -22,7 +61,9 @@ function status(root) {
     embedded_runtime_version: runtime.embedded_runtime_version,
     provider_families: policy.allowed_provider_families,
     default_submission_preset: profile.default_submission_preset || null,
-    assembled_distribution_exists: fs.existsSync(path.join(root, ".evcode-dist", "benchmark", "bin", "evcode-bench"))
+    assembled_distribution_exists: fs.existsSync(path.join(root, ".evcode-dist", "benchmark", "bin", "evcode-bench")),
+    source_codex_home: resolveSourceCodexHome(),
+    bundled_host_available: Boolean(resolveBundledHost(root))
   };
 }
 
@@ -78,12 +119,7 @@ function assemble(root) {
   const args = process.argv.slice(3);
   const result = spawnSync(
     "python3",
-    [
-      path.join(root, "scripts", "build", "assemble_distribution.py"),
-      "--channel",
-      "benchmark",
-      ...args
-    ],
+    buildAssemblyArgs(root, args),
     { encoding: "utf8" }
   );
   if (result.status !== 0) {
@@ -117,13 +153,7 @@ function native(root, passthroughArgs) {
   if (!fs.existsSync(launcherPath)) {
     const assembled = spawnSync(
       "python3",
-      [
-        path.join(root, "scripts", "build", "assemble_distribution.py"),
-        "--channel",
-        "benchmark",
-        "--output-root",
-        distBase
-      ],
+      buildAssemblyArgs(root, ["--output-root", distBase]),
       { encoding: "utf8" }
     );
     if (assembled.status !== 0) {
