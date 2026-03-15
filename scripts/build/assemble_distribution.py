@@ -81,7 +81,7 @@ def render_toml_table(parts: list[str], table: dict) -> list[str]:
     return lines
 
 
-def build_adopted_config_lines(source_config: dict) -> list[str]:
+def build_adopted_config_sections(source_config: dict) -> tuple[list[str], list[str]]:
     top_level_keys = [
         "model_provider",
         "model",
@@ -99,24 +99,27 @@ def build_adopted_config_lines(source_config: dict) -> list[str]:
         "trusted-workspace",
     ]
     table_keys = ["model_providers", "mcp_servers", "projects", "notice"]
-    lines: list[str] = []
+    top_level_lines: list[str] = []
     for key in top_level_keys:
         if key in source_config:
-            lines.append(f"{key} = {format_toml_value(source_config[key])}")
-    if lines:
-        lines.append("")
+            top_level_lines.append(f"{key} = {format_toml_value(source_config[key])}")
+    if top_level_lines:
+        top_level_lines.append("")
+    table_lines: list[str] = []
     for table_key in table_keys:
         table = source_config.get(table_key)
         if isinstance(table, dict) and table:
-            lines.extend(render_toml_table([table_key], table))
-    return lines
+            table_lines.extend(render_toml_table([table_key], table))
+    return top_level_lines, table_lines
 
 
 def build_config_toml(runtime_root: Path, profile: str, source_config: dict | None = None) -> str:
     hooks_root = runtime_root / "hooks"
     lines: list[str] = []
+    adopted_table_lines: list[str] = []
     if source_config:
-        lines.extend(build_adopted_config_lines(source_config))
+        adopted_top_level_lines, adopted_table_lines = build_adopted_config_sections(source_config)
+        lines.extend(adopted_top_level_lines)
     lines.extend(
         [
             f'profile = "{profile}"',
@@ -125,6 +128,11 @@ def build_config_toml(runtime_root: Path, profile: str, source_config: dict | No
             f"[profiles.{profile}]",
             "disable_cron = false",
             "",
+        ]
+    )
+    lines.extend(adopted_table_lines)
+    lines.extend(
+        [
             "[hooks]",
             "",
             "[[hooks.user_prompt_submit]]",

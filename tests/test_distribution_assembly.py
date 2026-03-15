@@ -4,6 +4,7 @@ import json
 import stat
 import subprocess
 import tempfile
+import toml
 import unittest
 from pathlib import Path
 
@@ -89,6 +90,7 @@ gpt-5 = "gpt-5.3-codex"
             manifest = json.loads(assembled.stdout)
             dist_root = Path(manifest["dist_root"])
             config_toml = (dist_root / "codex-home" / "config.toml").read_text(encoding="utf-8")
+            parsed = toml.loads(config_toml)
             self.assertIn('model_provider = "rightcode"', config_toml)
             self.assertIn('model = "gpt-5.4"', config_toml)
             self.assertIn("[model_providers.rightcode]", config_toml)
@@ -96,6 +98,10 @@ gpt-5 = "gpt-5.3-codex"
             self.assertIn("[mcp_servers.github]", config_toml)
             self.assertIn('[notice.model_migrations]', config_toml)
             self.assertIn('"gpt-5.3-codex" = "gpt-5.4"', config_toml)
+            self.assertEqual("standard", parsed["profile"])
+            self.assertEqual(False, parsed["disable_cron"])
+            self.assertEqual("gpt-5.4", parsed["notice"]["model_migrations"]["gpt-5.3-codex"])
+            self.assertNotIn("disable_cron", parsed["notice"]["model_migrations"])
             self.assertTrue((dist_root / "codex-home" / "auth.json").exists())
             self.assertTrue((dist_root / "codex-home" / "env.local").exists())
             self.assertEqual(str(source_codex_home.resolve()), manifest["source_codex_home"])
