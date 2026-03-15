@@ -22,8 +22,10 @@ def remove_path(path: Path) -> None:
         shutil.rmtree(path)
 
 
-def run(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=True)
+def run(cmd: list[str], cwd: Path, capture_output: bool = True) -> subprocess.CompletedProcess[str]:
+    if capture_output:
+        return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=True)
+    return subprocess.run(cmd, cwd=cwd, text=True, check=True)
 
 
 def package_dir(source_dir: Path, archive_path: Path) -> None:
@@ -68,8 +70,9 @@ def resolve_bundled_host_binary(repo_root: Path, artifacts_root: Path, bundled_h
                 cargo_path,
             ],
             cwd=repo_root,
+            capture_output=False,
         )
-        built_path = Path(host_build.stdout.strip())
+        built_path = bundled_host_binary
         host_build_status["succeeded"] = built_path.exists()
         host_build_status["binary"] = str(built_path) if built_path.exists() else None
     else:

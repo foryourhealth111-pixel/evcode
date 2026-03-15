@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import stat
 import subprocess
@@ -37,6 +38,12 @@ def main() -> int:
     parser.add_argument("--cargo-bin", default="cargo", help="Cargo executable")
     parser.add_argument("--package", default="codex-cli", help="Cargo package to build")
     parser.add_argument("--binary-name", default="codex", help="Compiled host binary name")
+    parser.add_argument(
+        "--jobs",
+        type=int,
+        default=int(os.environ.get("EVCODE_CARGO_BUILD_JOBS", "2")),
+        help="Maximum concurrent Cargo jobs for the patched host build",
+    )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -52,7 +59,7 @@ def main() -> int:
 
     cargo_root = workdir / "codex-rs"
     subprocess.run(
-        [args.cargo_bin, "build", "-p", args.package, "--release"],
+        [args.cargo_bin, "build", "-p", args.package, "--release", "--jobs", str(args.jobs)],
         cwd=cargo_root,
         check=True,
     )
