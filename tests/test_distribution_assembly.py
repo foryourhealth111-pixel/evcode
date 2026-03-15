@@ -69,6 +69,9 @@ class DistributionAssemblyTests(unittest.TestCase):
             self.assertEqual("interactive_governed", payload["evcode_mode"])
             self.assertEqual("standard", payload["evcode_channel"])
             self.assertTrue(payload["codex_home"].endswith("/codex-home"))
+            config_toml = (dist_root / "codex-home" / "config.toml").read_text(encoding="utf-8")
+            self.assertIn('profile = "standard"', config_toml)
+            self.assertIn("[profiles.standard]", config_toml)
 
     def test_standard_distribution_prefers_bundled_host_binary(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
