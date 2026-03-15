@@ -1,8 +1,8 @@
 {
   "id": "foryourhealth111-pixel/vco-skills-codex",
   "remote": "https://github.com/foryourhealth111-pixel/vco-skills-codex",
-  "version": "2.3.43",
-  "commit": "78856fb17288fda657f41e4279c8a66f350de1e1",
+  "version": "2.3.47",
+  "commit": "9cbd7416615046798a6d3fabcdbf89dd219761c7",
   "mirrored_dir": "runtime/vco",
   "materialized_subdir": "upstream",
   "integration_strategy": "embedded-governed-runtime"

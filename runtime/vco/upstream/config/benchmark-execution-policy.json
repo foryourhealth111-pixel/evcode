@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "enabled": true,
+  "default_profile_id": "repo_safe_benchmark_closure",
+  "scheduler": {
+    "kind": "bounded_local_xl_executor",
+    "wave_execution": "sequential",
+    "unit_execution": "sequential",
+    "max_parallel_units": 1,
+    "default_timeout_seconds": 240
+  },
+  "allowed_unit_kinds": [
+    "powershell_file",
+    "python_command",
+    "shell_command"
+  ],
+  "profiles": [
+    {
+      "id": "repo_safe_benchmark_closure",
+      "mode": "benchmark_autonomous",
+      "description": "Repo-safe benchmark closure profile that proves real execution using deterministic local verification commands.",
+      "proof_bundle_dirname": "benchmark-proof",
+      "expected_minimum_units": 2,
+      "waves": [
+        {
+          "wave_id": "wave-1",
+          "description": "Execute benchmark proof units against repo-safe local commands.",
+          "units": [
+            {
+              "unit_id": "runtime-neutral-freshness-gate-tests",
+              "kind": "python_command",
+              "command": "${VGO_PYTHON}",
+              "arguments": [
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests/runtime_neutral",
+                "-p",
+                "test_freshness_gate.py",
+                "-v"
+              ],
+              "cwd": "${REPO_ROOT}",
+              "timeout_seconds": 240,
+              "expected_exit_code": 0,
+              "expected_artifacts": []
+            },
+            {
+              "unit_id": "version-consistency-gate",
+              "kind": "powershell_file",
+              "script_path": "scripts/verify/vibe-version-consistency-gate.ps1",
+              "arguments": [],
+              "cwd": "${REPO_ROOT}",
+              "timeout_seconds": 240,
+              "expected_exit_code": 0,
+              "expected_artifacts": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

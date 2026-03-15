@@ -13,7 +13,7 @@
       "keywords": ["brainstorm", "ideation", "头脑风暴", "方案发散", "创意讨论"]
     },
     "writing-plans": {
-      "keywords": ["implementation plan", "task breakdown", "计划书", "实施计划", "任务拆解", "里程碑规划", "soft migration", "hard migration", "软迁移", "硬迁移", "canonical alias", "canonical + alias 映射", "迁移计划", "重构迁移", "验证命中稳定", "先做软迁移"]
+      "keywords": ["implementation plan", "task breakdown", "execution plan", "milestone roadmap", "migration plan", "governance rollout", "rollout plan", "runbook", "wave plan", "cross-module migration", "routing governance", "计划书", "实施计划", "任务拆解", "里程碑规划", "soft migration", "hard migration", "软迁移", "硬迁移", "canonical alias", "canonical + alias 映射", "迁移计划", "重构迁移", "验证命中稳定", "先做软迁移"]
     },
     "vibe": {
       "keywords": ["/vibe", "$vibe", "vibe route", "vibe 路由", "vibe内核", "vibe skills", "路由融合", "路由冲突", "命中稳定", "误路由", "权重计算", "阈值计算"]
@@ -157,7 +157,7 @@
       "keywords": ["aios dev", "aios开发", "故事实现", "story implementation", "按故事开发"]
     },
     "aios-architect": {
-      "keywords": ["aios architect", "架构设计", "技术架构", "architecture design", "架构评审"]
+      "keywords": ["aios architect", "架构设计", "技术架构", "architecture design", "technical architecture", "module boundary", "cross-module architecture", "routing architecture", "governance architecture", "architecture review", "架构评审"]
     },
     "aios-pm": {
       "keywords": ["aios pm", "prd", "产品需求文档", "产品规划", "epic规划"]

@@ -16,3 +16,7 @@ Filename contract:
 Primary policy:
 
 - `config/requirement-doc-policy.json`
+
+## Current Entry
+
+- [`2026-03-15-linux-router-host-neutrality-and-route-quality-recovery.md`](./2026-03-15-linux-router-host-neutrality-and-route-quality-recovery.md): Frozen requirement baseline for Linux host-neutral router recovery, route quality repair, path-neutral cleanup, and proof-aligned release truth.

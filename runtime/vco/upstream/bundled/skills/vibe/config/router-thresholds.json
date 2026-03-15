@@ -13,8 +13,9 @@
                        "auto_route":  0.7,
                        "confirm_required":  0.45,
                        "fallback_to_legacy_below":  0.45,
-                       "min_top1_top2_gap":  0.08,
-                       "min_candidate_signal_for_confirm_override":  0.2
+                       "min_top1_top2_gap":  0.06,
+                       "min_candidate_signal_for_confirm_override":  0.2,
+                       "min_candidate_signal_for_auto_route":  0.6
                    },
     "safety":  {
                    "enforce_grade_boundary":  true,

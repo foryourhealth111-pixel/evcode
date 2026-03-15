@@ -24,6 +24,7 @@
   "bridges": {
     "confirm_ui_policy": "config/confirm-ui-policy.json",
     "deep_discovery_policy": "config/deep-discovery-policy.json",
-    "plan_execution_policy": "config/plan-execution-policy.json"
+    "plan_execution_policy": "config/plan-execution-policy.json",
+    "benchmark_execution_policy": "config/benchmark-execution-policy.json"
   }
 }

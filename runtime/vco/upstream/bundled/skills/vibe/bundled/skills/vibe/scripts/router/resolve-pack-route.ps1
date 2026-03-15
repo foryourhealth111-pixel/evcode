@@ -338,6 +338,7 @@ $weightSkillSignal = if ($weights.skill_keyword_signal -ne $null) { [double]$wei
 $candidateSelectionConfig = if ($thresholds.candidate_selection) { $thresholds.candidate_selection } else { $null }
 $minTopGap = if ($th.min_top1_top2_gap -ne $null) { [double]$th.min_top1_top2_gap } else { 0.0 }
 $minCandidateSignalForConfirmOverride = if ($th.min_candidate_signal_for_confirm_override -ne $null) { [double]$th.min_candidate_signal_for_confirm_override } else { 0.0 }
+$minCandidateSignalForAutoRoute = if ($th.min_candidate_signal_for_auto_route -ne $null) { [double]$th.min_candidate_signal_for_auto_route } else { [double]$th.auto_route }
 $enforceConfirmOnLegacyFallback = if ($rules.enforce_confirm_on_legacy_fallback -ne $null) { [bool]$rules.enforce_confirm_on_legacy_fallback } else { $false }
 
 $probeContext = New-RouteProbeContext `
@@ -478,6 +479,35 @@ Add-RouteProbeEvent -Context $probeContext -Stage "deep_discovery.contract" -Not
 }
 $null = Add-HeartbeatPulse -Context $heartbeatContext -Stage "deep_discovery.contract" -Phase "deep_discovery" -Note "intent contract synthesized"
 
+$deepDiscoveryConfirmRelaxed = $false
+if ($deepDiscoveryAdvice -and [bool]$deepDiscoveryAdvice.confirm_required) {
+    $intentCompleteness = if ($intentContract -and $intentContract.completeness -ne $null) { [double]$intentContract.completeness } else { 0.0 }
+    $minCompletenessForConfirmRequired = if ($deepDiscoveryAdvice.min_completeness_for_confirm_required -ne $null) {
+        [double]$deepDiscoveryAdvice.min_completeness_for_confirm_required
+    } else {
+        1.0
+    }
+    $singleCapabilityHit = ((@($deepDiscoveryAdvice.recommended_capabilities)).Count -le 1)
+
+    if ($singleCapabilityHit -and ($intentCompleteness -ge $minCompletenessForConfirmRequired)) {
+        $deepDiscoveryAdvice.enforcement = "advisory"
+        $deepDiscoveryAdvice.reason = "intent_contract_sufficient_single_capability"
+        $deepDiscoveryAdvice.confirm_required = $false
+        $deepDiscoveryAdvice.interview_required = $false
+        $deepDiscoveryConfirmRelaxed = $true
+    }
+}
+
+Add-RouteProbeEvent -Context $probeContext -Stage "deep_discovery.contract_normalization" -Note "deep discovery confirm posture normalized against intent completeness" -Data @{
+    confirm_relaxed = [bool]$deepDiscoveryConfirmRelaxed
+    completeness = if ($intentContract) { [double]$intentContract.completeness } else { 0.0 }
+    min_completeness_for_confirm_required = if ($deepDiscoveryAdvice -and $deepDiscoveryAdvice.min_completeness_for_confirm_required -ne $null) { [double]$deepDiscoveryAdvice.min_completeness_for_confirm_required } else { $null }
+    capability_hit_count = if ($deepDiscoveryAdvice -and $deepDiscoveryAdvice.recommended_capabilities) { @($deepDiscoveryAdvice.recommended_capabilities).Count } else { 0 }
+    enforcement = if ($deepDiscoveryAdvice) { [string]$deepDiscoveryAdvice.enforcement } else { $null }
+    confirm_required = if ($deepDiscoveryAdvice) { [bool]$deepDiscoveryAdvice.confirm_required } else { $false }
+    reason = if ($deepDiscoveryAdvice) { [string]$deepDiscoveryAdvice.reason } else { $null }
+}
+
 $deepDiscoveryFilter = Get-DeepDiscoveryCandidateFilter `
     -Packs @($packManifest.packs) `
     -IntentContract $intentContract `
@@ -564,12 +594,20 @@ $canOverrideLegacyFallback = $false
 if ($top -and ($top.candidate_selection_reason -in @("keyword_ranked", "requested_skill")) -and ($candidateSignal -ge $minCandidateSignalForConfirmOverride)) {
     $canOverrideLegacyFallback = $true
 }
+$canAutoRouteFromCandidateSignal = $false
+if ($top -and ($top.candidate_selection_reason -in @("keyword_ranked", "requested_skill")) -and ($candidateSignal -ge $minCandidateSignalForAutoRoute) -and ($topGap -ge $minTopGap)) {
+    $canAutoRouteFromCandidateSignal = $true
+}
 $routeReason = ""
 if (-not $top) {
     $routeMode = "legacy_fallback"
     $routeReason = "no_eligible_pack"
 } elseif ($confidence -lt [double]$th.fallback_to_legacy_below) {
-    if ($canOverrideLegacyFallback) {
+    if ($canAutoRouteFromCandidateSignal) {
+        $routeMode = "pack_overlay"
+        $routeReason = "candidate_signal_auto_route"
+        $confidence = [Math]::Max($confidence, [double]$th.auto_route)
+    } elseif ($canOverrideLegacyFallback) {
         $routeMode = "confirm_required"
         $routeReason = "candidate_signal_override"
         $confidence = [Math]::Max($confidence, [double]$th.confirm_required)
@@ -581,8 +619,14 @@ if (-not $top) {
     $routeMode = "confirm_required"
     $routeReason = "top_candidates_too_close"
 } elseif ($confidence -lt [double]$th.auto_route) {
-    $routeMode = "confirm_required"
-    $routeReason = "confidence_requires_confirmation"
+    if ($canAutoRouteFromCandidateSignal) {
+        $routeMode = "pack_overlay"
+        $routeReason = "candidate_signal_auto_route"
+        $confidence = [Math]::Max($confidence, [double]$th.auto_route)
+    } else {
+        $routeMode = "confirm_required"
+        $routeReason = "confidence_requires_confirmation"
+    }
 } else {
     $routeMode = "pack_overlay"
     $routeReason = "auto_route"
@@ -1070,6 +1114,74 @@ if ($unattendedDecision -and [bool]$unattendedDecision.unattended -and $confirmU
     }
 }
 
+$fallbackGovernance = $null
+$fallbackGovernancePath = Join-Path $repoRoot 'config\fallback-governance.json'
+if (Test-Path -LiteralPath $fallbackGovernancePath) {
+    try {
+        $fallbackGovernance = Get-Content -LiteralPath $fallbackGovernancePath -Raw -Encoding UTF8 | ConvertFrom-Json
+    } catch {
+        $fallbackGovernance = $null
+    }
+}
+
+$fallbackActive = [bool](
+    $legacyFallbackGuardApplied -or
+    $routeModeBeforeUnattended -eq 'legacy_fallback' -or
+    $routeMode -eq 'legacy_fallback' -or
+    $routeReason -eq 'legacy_fallback_guard'
+)
+$degradationState = if ($legacyFallbackGuardApplied) {
+    if ($fallbackGovernance -and $fallbackGovernance.truth_contract -and $fallbackGovernance.truth_contract.fallback_guarded_state) {
+        [string]$fallbackGovernance.truth_contract.fallback_guarded_state
+    } else {
+        'fallback_guarded'
+    }
+} elseif ($fallbackActive) {
+    if ($fallbackGovernance -and $fallbackGovernance.truth_contract -and $fallbackGovernance.truth_contract.fallback_degradation_state) {
+        [string]$fallbackGovernance.truth_contract.fallback_degradation_state
+    } else {
+        'fallback_active'
+    }
+} else {
+    'standard'
+}
+$truthLevel = if ($fallbackActive) {
+    if ($fallbackGovernance -and $fallbackGovernance.truth_contract -and $fallbackGovernance.truth_contract.fallback_truth_level) {
+        [string]$fallbackGovernance.truth_contract.fallback_truth_level
+    } else {
+        'non_authoritative'
+    }
+} else {
+    if ($fallbackGovernance -and $fallbackGovernance.truth_contract -and $fallbackGovernance.truth_contract.standard_truth_level) {
+        [string]$fallbackGovernance.truth_contract.standard_truth_level
+    } else {
+        'authoritative'
+    }
+}
+$hazardAlertRequired = [bool]$fallbackActive
+if ($fallbackGovernance -and $fallbackGovernance.require_hazard_alert -ne $null) {
+    $hazardAlertRequired = ([bool]$fallbackGovernance.require_hazard_alert) -and $fallbackActive
+}
+$hazardReason = if ($legacyFallbackOriginalReason) {
+    [string]$legacyFallbackOriginalReason
+} elseif ($routeReasonBeforeUnattended) {
+    [string]$routeReasonBeforeUnattended
+} else {
+    [string]$routeReason
+}
+$hazardAlert = if ($hazardAlertRequired) {
+    [pscustomobject]@{
+        title = if ($fallbackGovernance -and $fallbackGovernance.hazard_alert_title) { [string]$fallbackGovernance.hazard_alert_title } else { 'FALLBACK HAZARD ALERT' }
+        severity = if ($fallbackGovernance -and $fallbackGovernance.hazard_alert_severity) { [string]$fallbackGovernance.hazard_alert_severity } else { 'critical' }
+        reason = $hazardReason
+        message = if ($fallbackGovernance -and $fallbackGovernance.hazard_summary) { [string]$fallbackGovernance.hazard_summary } else { '当前结果来自回退或退化路径，不等价于标准成功。继续使用可能在不自知的情况下承受功能退化、验证强度下降或可靠性下降。' }
+        recovery_action = if ($fallbackGovernance -and $fallbackGovernance.hazard_recovery_action) { [string]$fallbackGovernance.hazard_recovery_action } else { '如需 authoritative 结果，请先修复主路径能力或补齐依赖后重新执行。' }
+        manual_review_required = if ($fallbackGovernance -and $fallbackGovernance.truth_contract -and $fallbackGovernance.truth_contract.manual_review_required -ne $null) { [bool]$fallbackGovernance.truth_contract.manual_review_required } else { $true }
+    }
+} else {
+    $null
+}
+
 $heartbeatFinalizeStatus = Finalize-HeartbeatContext -Context $heartbeatContext -FinalPhase "router.final" -Succeeded $true -Note "route output assembled"
 $heartbeatAdvice = Get-HeartbeatAdvice -Context $heartbeatContext
 $heartbeatStatus = if ($heartbeatFinalizeStatus) { $heartbeatFinalizeStatus } else { Get-HeartbeatStatus -Context $heartbeatContext }
@@ -1095,12 +1207,19 @@ $result = [pscustomobject]@{
     candidate_signal = [Math]::Round($candidateSignal, 4)
     legacy_fallback_guard_applied = [bool]$legacyFallbackGuardApplied
     legacy_fallback_original_reason = $legacyFallbackOriginalReason
+    fallback_active = [bool]$fallbackActive
+    hazard_alert_required = [bool]$hazardAlertRequired
+    truth_level = $truthLevel
+    degradation_state = $degradationState
+    non_authoritative = [bool]($truthLevel -ne 'authoritative')
+    hazard_alert = $hazardAlert
     thresholds = [pscustomobject]@{
         auto_route = [double]$th.auto_route
         confirm_required = [double]$th.confirm_required
         fallback_to_legacy_below = [double]$th.fallback_to_legacy_below
         min_top1_top2_gap = [double]$minTopGap
         min_candidate_signal_for_confirm_override = [double]$minCandidateSignalForConfirmOverride
+        min_candidate_signal_for_auto_route = [double]$minCandidateSignalForAutoRoute
         enforce_confirm_on_legacy_fallback = [bool]$enforceConfirmOnLegacyFallback
     }
     alias = $aliasResult
@@ -1154,13 +1273,17 @@ $result = [pscustomobject]@{
 
 $confirmSkillOptions = Build-ConfirmSkillOptions -Result $result -ConfirmUiPolicy $confirmUiPolicyResolved -RepoRoot ([string]$repoRoot)
 if ($confirmSkillOptions) {
-    $confirmText = Build-ConfirmUiText -ConfirmSkillOptions $confirmSkillOptions -UnattendedDecision $unattendedDecision
+    $confirmText = Build-ConfirmUiText -ConfirmSkillOptions $confirmSkillOptions -UnattendedDecision $unattendedDecision -Result $result
     $result | Add-Member -NotePropertyName "confirm_ui" -NotePropertyValue ([pscustomobject]@{
         enabled = $true
         pack_id = [string]$confirmSkillOptions.selected_pack
         selected_skill = [string]$confirmSkillOptions.selected_skill
         options = @($confirmSkillOptions.options)
         rendered_text = $confirmText
+        hazard_alert_required = [bool]$result.hazard_alert_required
+        truth_level = [string]$result.truth_level
+        degradation_state = [string]$result.degradation_state
+        hazard_alert = $result.hazard_alert
     })
 }
 

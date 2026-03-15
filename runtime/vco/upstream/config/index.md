@@ -27,6 +27,7 @@
 | [`distribution-tiers.json`](distribution-tiers.json) | distribution tier taxonomy used by upstream-lock governance |
 | [`frontmatter-integrity-policy.json`](frontmatter-integrity-policy.json) | BOM / byte-0 frontmatter 保护面 |
 | [`version-governance.json`](version-governance.json) | canonical / bundled / nested / installed runtime 的版本与 packaging contract |
+| [`benchmark-execution-policy.json`](benchmark-execution-policy.json) | benchmark_autonomous 的 bounded executor / wave / proof contract |
 | [`operator-preview-contract.json`](operator-preview-contract.json) | governance operator preview receipt contract |
 | [`candidate-quality-board.json`](candidate-quality-board.json) | candidate quality board |
 | [`promotion-board.json`](promotion-board.json) | capability promotion / absorption board |
@@ -36,7 +37,7 @@
 
 - **Routing core**：`pack-manifest.json`, `router-thresholds.json`, `skill-alias-map.json`, `skill-routing-rules.json`, `skill-keyword-index.json`.
 - **Overlay / capability policy**：`prompt-overlay.json`, `memory-governance.json`, `observability-policy.json`, `role-pack-policy.json`, `browserops-provider-policy.json` 等。
-- **Cleanliness / runtime / packaging**：`repo-cleanliness-policy.json`, `outputs-boundary-policy.json`, `frontmatter-integrity-policy.json`, `version-governance.json`, `execution-context-status.json`.
+- **Cleanliness / runtime / packaging**：`repo-cleanliness-policy.json`, `outputs-boundary-policy.json`, `frontmatter-integrity-policy.json`, `version-governance.json`, `benchmark-execution-policy.json`, `execution-context-status.json`.
 - **Boards / scorecards / lifecycle**：`candidate-quality-board.json`, `promotion-board.json`, `capability-catalog.json`, `capability-lifecycle-policy.json`, `role-pack-scorecard.json`.
 - **Upstream / distribution governance**：`upstream-lock.json`, `upstream-corpus-manifest.json`, `upstream-source-aliases.json`, `distribution-tiers.json`.
 - **Wave / rollout state**：`wave*-manifest.json`, `wave*-board.json`, `openspec-policy.json`, `gsd-overlay.json`, `upstream-value-ops-board.json`.

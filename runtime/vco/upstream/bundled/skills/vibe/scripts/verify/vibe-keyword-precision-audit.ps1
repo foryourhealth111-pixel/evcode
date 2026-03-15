@@ -125,7 +125,7 @@ foreach ($pack in $packManifest.packs) {
     $rawKeywords = @($pack.trigger_keywords | ForEach-Object { [string]$_ })
     Record-WarnOrFail -Condition (($rawKeywords | Where-Object { -not $_ -or -not $_.Trim() }).Count -eq 0) -Message "pack '$($pack.id)' trigger_keywords contain empty items"
     Record-WarnOrFail -Condition (($rawKeywords | Where-Object { $_ -ne $_.Trim() }).Count -eq 0) -Message "pack '$($pack.id)' trigger_keywords contain leading/trailing whitespace (normalize before scoring)"
-    Record-WarnOrFail -Condition (($rawKeywords | Where-Object { $_ -match '[A-Z]' }).Count -eq 0) -Message "pack '$($pack.id)' trigger_keywords contain uppercase ASCII (store lowercase to avoid score drift)"
+    Record-WarnOrFail -Condition (($rawKeywords | Where-Object { $_ -cmatch '[A-Z]' }).Count -eq 0) -Message "pack '$($pack.id)' trigger_keywords contain uppercase ASCII (store lowercase to avoid score drift)"
 
     $dups = $normalized | Group-Object | Where-Object { $_.Count -gt 1 }
     Record-WarnOrFail -Condition ($dups.Count -eq 0) -Message "pack '$($pack.id)' trigger_keywords have duplicates after normalization (trim+lower)"

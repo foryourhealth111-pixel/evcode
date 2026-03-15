@@ -30,7 +30,7 @@ EvCode now has three authoritative inputs:
 1. selected host baseline
    - `stellarlinkco/codex`
 2. selected governed runtime truth
-   - `vco-skills-codex` governed runtime `v2.3.43`
+   - `vco-skills-codex` governed runtime `v2.3.47`
 3. EvCode local contracts
    - dual-distribution model
    - benchmark adapter boundary

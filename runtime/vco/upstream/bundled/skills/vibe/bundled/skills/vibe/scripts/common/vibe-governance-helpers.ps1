@@ -260,6 +260,67 @@ function Get-VgoPowerShellCommand {
     throw 'Unable to resolve a PowerShell host for governed sub-process execution.'
 }
 
+function Get-VgoPythonCommand {
+    $python = Get-Command python -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1
+    if (-not [string]::IsNullOrWhiteSpace($python) -and (Test-Path -LiteralPath $python)) {
+        return [pscustomobject]@{
+            host_path = [System.IO.Path]::GetFullPath($python)
+            host_leaf = [System.IO.Path]::GetFileName($python).ToLowerInvariant()
+            prefix_arguments = @()
+        }
+    }
+
+    $python3 = Get-Command python3 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1
+    if (-not [string]::IsNullOrWhiteSpace($python3) -and (Test-Path -LiteralPath $python3)) {
+        return [pscustomobject]@{
+            host_path = [System.IO.Path]::GetFullPath($python3)
+            host_leaf = [System.IO.Path]::GetFileName($python3).ToLowerInvariant()
+            prefix_arguments = @()
+        }
+    }
+
+    $pyLauncher = Get-Command py -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1
+    if (-not [string]::IsNullOrWhiteSpace($pyLauncher) -and (Test-Path -LiteralPath $pyLauncher)) {
+        return [pscustomobject]@{
+            host_path = [System.IO.Path]::GetFullPath($pyLauncher)
+            host_leaf = [System.IO.Path]::GetFileName($pyLauncher).ToLowerInvariant()
+            prefix_arguments = @('-3')
+        }
+    }
+
+    throw "Unable to resolve a Python host for governed execution. Tried 'python', 'python3', and 'py -3'."
+}
+
+function Resolve-VgoPythonCommandSpec {
+    param(
+        [AllowEmptyString()] [string]$Command = ''
+    )
+
+    $normalized = if ($null -eq $Command) { '' } else { ([string]$Command).Trim() }
+    if ([string]::IsNullOrWhiteSpace($normalized) -or $normalized -in @('python', 'python3', 'py', '${VGO_PYTHON}')) {
+        return Get-VgoPythonCommand
+    }
+
+    if ([System.IO.Path]::IsPathRooted($normalized) -and (Test-Path -LiteralPath $normalized)) {
+        return [pscustomobject]@{
+            host_path = [System.IO.Path]::GetFullPath($normalized)
+            host_leaf = [System.IO.Path]::GetFileName($normalized).ToLowerInvariant()
+            prefix_arguments = @()
+        }
+    }
+
+    $resolved = Get-Command $normalized -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source -First 1
+    if (-not [string]::IsNullOrWhiteSpace($resolved) -and (Test-Path -LiteralPath $resolved)) {
+        return [pscustomobject]@{
+            host_path = [System.IO.Path]::GetFullPath($resolved)
+            host_leaf = [System.IO.Path]::GetFileName($resolved).ToLowerInvariant()
+            prefix_arguments = @()
+        }
+    }
+
+    throw "Unable to resolve requested Python command spec: $normalized"
+}
+
 function Get-VgoPowerShellFileInvocation {
     param(
         [Parameter(Mandatory)] [string]$ScriptPath,

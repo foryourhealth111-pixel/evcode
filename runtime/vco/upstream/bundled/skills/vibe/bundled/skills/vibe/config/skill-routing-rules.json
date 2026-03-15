@@ -61,6 +61,13 @@
                                          "positive_keywords":  [
                                                                    "implementation plan",
                                                                    "task breakdown",
+                                                                   "execution plan",
+                                                                   "milestone roadmap",
+                                                                   "migration plan",
+                                                                   "governance rollout",
+                                                                   "rollout plan",
+                                                                   "runbook",
+                                                                   "wave plan",
                                                                    "计划",
                                                                    "任务拆解",
                                                                    "里程碑"
@@ -552,6 +559,11 @@
                                           "positive_keywords":  [
                                                                     "architecture",
                                                                     "technical design",
+                                                                    "technical architecture",
+                                                                    "module boundary",
+                                                                    "cross-module architecture",
+                                                                    "routing architecture",
+                                                                    "governance architecture",
                                                                     "架构"
                                                                 ],
                                           "negative_keywords":  [

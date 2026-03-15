@@ -123,6 +123,55 @@ function Test-LegacyFallbackGuardEquivalence {
     }
 }
 
+function Test-CandidateSignalAutoRouteEquivalence {
+    param(
+        [object]$Legacy,
+        [object]$Modular,
+        [double]$Tolerance
+    )
+
+    $legacySelected = Get-SelectedRouteInfo -Route $Legacy
+    $modularSelected = Get-SelectedRouteInfo -Route $Modular
+    $legacyPack = $legacySelected.pack_id
+    $modularPack = $modularSelected.pack_id
+    $legacySkill = $legacySelected.skill
+    $modularSkill = $modularSelected.skill
+    $autoRouteThreshold = if ($Modular.thresholds -and ($Modular.thresholds.PSObject.Properties.Name -contains "auto_route") -and ($Modular.thresholds.auto_route -ne $null)) {
+        [double]$Modular.thresholds.auto_route
+    } else {
+        0.7
+    }
+    $minTopGap = if ($Modular.thresholds -and ($Modular.thresholds.PSObject.Properties.Name -contains "min_top1_top2_gap") -and ($Modular.thresholds.min_top1_top2_gap -ne $null)) {
+        [double]$Modular.thresholds.min_top1_top2_gap
+    } else {
+        0.0
+    }
+    $minCandidateSignal = if ($Modular.thresholds -and ($Modular.thresholds.PSObject.Properties.Name -contains "min_candidate_signal_for_auto_route") -and ($Modular.thresholds.min_candidate_signal_for_auto_route -ne $null)) {
+        [double]$Modular.thresholds.min_candidate_signal_for_auto_route
+    } else {
+        $autoRouteThreshold
+    }
+
+    $legacyConfirmLike = ([string]$Legacy.route_mode -eq "confirm_required") -or ([string]$Legacy.route_mode -eq "legacy_fallback")
+    $equivalent =
+        $legacyConfirmLike -and
+        ([string]$Modular.route_mode -eq "pack_overlay") -and
+        ([string]$Modular.route_reason -eq "candidate_signal_auto_route") -and
+        ($legacyPack -eq $modularPack) -and
+        ($legacySkill -eq $modularSkill) -and
+        (Compare-Float -Left ([double]$Legacy.top1_top2_gap) -Right ([double]$Modular.top1_top2_gap) -Tolerance $Tolerance) -and
+        (Compare-Float -Left ([double]$Legacy.candidate_signal) -Right ([double]$Modular.candidate_signal) -Tolerance $Tolerance) -and
+        ([double]$Modular.top1_top2_gap -ge $minTopGap) -and
+        ([double]$Modular.candidate_signal -ge $minCandidateSignal) -and
+        ([double]$Modular.confidence -ge $autoRouteThreshold)
+
+    return [pscustomobject]@{
+        equivalent = [bool]$equivalent
+        reason = if ($equivalent) { "candidate_signal_auto_route_equivalent" } else { $null }
+        allowed_mismatches = if ($equivalent) { @("route_mode", "route_reason", "confidence") } else { @() }
+    }
+}
+
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 $modularScript = Join-Path $repoRoot "scripts\router\resolve-pack-route.ps1"
 $legacyScript = Join-Path $repoRoot "scripts\router\legacy\resolve-pack-route.legacy.ps1"
@@ -155,6 +204,9 @@ foreach ($case in $cases) {
     $modular = Invoke-RouteScript -ScriptPath $modularScript -Prompt $case.prompt -Grade $case.grade -TaskType $case.task_type -RequestedSkill $case.requested_skill
 
     $equivalence = Test-LegacyFallbackGuardEquivalence -Legacy $legacy -Modular $modular -Tolerance $FloatTolerance
+    if (-not $equivalence.equivalent) {
+        $equivalence = Test-CandidateSignalAutoRouteEquivalence -Legacy $legacy -Modular $modular -Tolerance $FloatTolerance
+    }
     $mismatches = @()
 
     if ([string]$legacy.route_mode -ne [string]$modular.route_mode -and -not ($equivalence.allowed_mismatches -contains "route_mode")) { $mismatches += "route_mode" }

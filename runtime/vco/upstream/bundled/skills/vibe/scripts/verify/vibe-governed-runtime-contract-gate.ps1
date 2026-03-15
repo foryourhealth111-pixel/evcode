@@ -47,6 +47,9 @@ $requiredFiles = @(
     'protocols/retro.md',
     'config/runtime-contract.json',
     'config/runtime-modes.json',
+    'config/fallback-governance.json',
+    'config/implementation-guardrails.json',
+    'config/benchmark-execution-policy.json',
     'config/requirement-doc-policy.json',
     'config/plan-execution-policy.json',
     'config/phase-cleanup-policy.json',
@@ -60,7 +63,11 @@ $requiredFiles = @(
     'scripts/runtime/Write-RequirementDoc.ps1',
     'scripts/runtime/Write-XlPlan.ps1',
     'scripts/runtime/Invoke-PlanExecute.ps1',
-    'scripts/runtime/Invoke-PhaseCleanup.ps1'
+    'scripts/runtime/Invoke-PhaseCleanup.ps1',
+    'scripts/verify/vibe-benchmark-autonomous-proof-gate.ps1',
+    'scripts/verify/vibe-no-silent-fallback-contract-gate.ps1',
+    'scripts/verify/vibe-no-self-introduced-fallback-gate.ps1',
+    'scripts/verify/vibe-release-truth-consistency-gate.ps1'
 )
 
 foreach ($relativePath in $requiredFiles) {
@@ -71,6 +78,9 @@ foreach ($relativePath in $requiredFiles) {
 $runtimeContract = Get-Content -LiteralPath (Join-Path $repoRoot 'config\runtime-contract.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 Add-Assertion -Results ([ref]$results) -Condition ($runtimeContract.entry_skill -eq 'vibe') -Message 'runtime contract entry skill is vibe'
 Add-Assertion -Results ([ref]$results) -Condition (@($runtimeContract.stages).Count -eq 6) -Message 'runtime contract defines six fixed stages'
+Add-Assertion -Results ([ref]$results) -Condition ([bool]$runtimeContract.invariants.no_silent_fallback) -Message 'runtime contract forbids silent fallback'
+Add-Assertion -Results ([ref]$results) -Condition ([bool]$runtimeContract.invariants.fallback_hazard_alert_required) -Message 'runtime contract requires fallback hazard alerts'
+Add-Assertion -Results ([ref]$results) -Condition ([bool]$runtimeContract.invariants.no_self_introduced_fallback_without_requirement_approval) -Message 'runtime contract forbids self-introduced fallback without requirement approval'
 
 $skillText = Get-Content -LiteralPath (Join-Path $repoRoot 'SKILL.md') -Raw -Encoding UTF8
 Add-Assertion -Results ([ref]$results) -Condition (
@@ -97,12 +107,23 @@ $artifactPaths = @(
     $summary.summary.artifacts.requirement_doc,
     $summary.summary.artifacts.execution_plan,
     $summary.summary.artifacts.execute_receipt,
+    $summary.summary.artifacts.execution_manifest,
+    $summary.summary.artifacts.benchmark_proof_manifest,
     $summary.summary.artifacts.cleanup_receipt
 )
 
 foreach ($artifactPath in $artifactPaths) {
     Add-Assertion -Results ([ref]$results) -Condition (Test-Path -LiteralPath $artifactPath) -Message ("runtime smoke artifact exists: {0}" -f ([System.IO.Path]::GetFileName($artifactPath))) -Details $artifactPath
 }
+
+$executeReceipt = Get-Content -LiteralPath $summary.summary.artifacts.execute_receipt -Raw -Encoding UTF8 | ConvertFrom-Json
+$executionManifest = Get-Content -LiteralPath $summary.summary.artifacts.execution_manifest -Raw -Encoding UTF8 | ConvertFrom-Json
+$proofManifest = Get-Content -LiteralPath $summary.summary.artifacts.benchmark_proof_manifest -Raw -Encoding UTF8 | ConvertFrom-Json
+
+Add-Assertion -Results ([ref]$results) -Condition ($executeReceipt.status -ne 'execution-contract-prepared') -Message 'runtime smoke execute receipt is not receipt-only'
+Add-Assertion -Results ([ref]$results) -Condition ($executionManifest.status -eq 'completed') -Message 'runtime smoke execution manifest completed' -Details $executionManifest.status
+Add-Assertion -Results ([ref]$results) -Condition ([int]$executionManifest.executed_unit_count -ge 2) -Message 'runtime smoke executes at least two benchmark units' -Details $executionManifest.executed_unit_count
+Add-Assertion -Results ([ref]$results) -Condition ([bool]$proofManifest.proof_passed) -Message 'runtime smoke benchmark proof manifest is green'
 
 $failureCount = @($results | Where-Object { -not $_.passed }).Count
 $gatePassed = ($failureCount -eq 0)

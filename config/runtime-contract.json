@@ -3,7 +3,7 @@
   "updated_at": "2026-03-15",
   "product": "evcode",
   "host_baseline": "stellarlinkco/codex",
-  "embedded_runtime_version": "2.3.43",
+  "embedded_runtime_version": "2.3.47",
   "entry_skill": "vibe",
   "allowed_modes": [
     "interactive_governed",

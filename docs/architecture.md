@@ -73,7 +73,7 @@ The current preferred host baseline is a hook-rich Codex host rather than a wrap
 The active bridge and distribution design now assumes:
 
 - a selected Codex host fork with native hook surfaces
-- embedded VCO governed runtime `v2.3.43`
+- embedded VCO governed runtime `v2.3.47`
 - one runtime core with two release channels:
   - standard
   - benchmark

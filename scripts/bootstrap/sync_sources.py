@@ -28,7 +28,7 @@ def clean_directory_contents(target: Path, preserved_names: set[str]) -> None:
 
 
 def sparse_clone(remote: str, commit: str, target: Path, paths: list[str]) -> None:
-    clean_directory_contents(target, preserved_names={".source.json", "README.md", "UPSTREAM.md", "PATCHES.md", "materialization.json", "MATERIALIZATION.md", "freshness.json", "required-runtime-markers.json", "patches"})
+    clean_directory_contents(target, preserved_names={".git"})
     if not (target / ".git").exists():
         run(["git", "init"], cwd=target)
         run(["git", "remote", "add", "origin", remote], cwd=target)
@@ -45,6 +45,8 @@ def sparse_clone(remote: str, commit: str, target: Path, paths: list[str]) -> No
     sparse_file.write_text("\n".join(paths) + "\n", encoding="utf-8")
     run(["git", "fetch", "--depth=1", "origin", commit], cwd=target)
     run(["git", "checkout", "FETCH_HEAD"], cwd=target)
+    run(["git", "checkout", "--", "."], cwd=target)
+    run(["git", "sparse-checkout", "reapply"], cwd=target)
 
 
 def write_materialization_receipt(target: Path, payload: dict, paths: list[str]) -> None:
@@ -101,13 +103,32 @@ def main() -> int:
             runtime_target = runtime_root / payload["runtime"].get("materialized_subdir", "upstream")
             runtime_paths = [
                 "README.md",
+                "README.en.md",
+                "SKILL.md",
+                "install.ps1",
+                "install.sh",
+                "check.ps1",
+                "check.sh",
+                "adapters",
+                "agents",
+                "bundled",
                 "protocols",
                 "config",
+                "core",
+                "dist",
+                "hooks",
+                "mcp",
+                "references",
+                "rules",
+                "schemas",
+                "scripts/common",
+                "scripts/router",
                 "scripts/runtime",
                 "scripts/verify",
-                "docs/releases",
-                "docs/requirements",
-                "bundled/skills/vibe",
+                "docs",
+                "templates",
+                "third_party",
+                "vendor",
             ]
             sparse_clone(payload["runtime"]["remote"], payload["runtime"]["commit"], runtime_target, runtime_paths)
             write_materialization_receipt(runtime_root, payload["runtime"], runtime_paths)

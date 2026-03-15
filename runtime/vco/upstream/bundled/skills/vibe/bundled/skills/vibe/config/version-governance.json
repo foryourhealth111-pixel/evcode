@@ -1,10 +1,10 @@
 {
     "schema_version":  2,
     "release":  {
-                    "version":  "2.3.43",
+                    "version":  "2.3.47",
                     "updated":  "2026-03-15",
                     "channel":  "stable",
-                    "notes":  "Lands the governed runtime contract as the canonical vibe entry, extends installed-runtime markers to cover the six-stage runtime surfaces, adds runtime-neutral bridge tests, and aligns the outward-facing release surface to the new governed entry model."
+                    "notes":  "Establishes no-silent-fallback governance, forbids self-introduced fallback without requirement approval, and aligns release truth with explicit degraded-path hazard signaling."
                 },
     "source_of_truth":  {
                             "canonical_root":  ".",
@@ -103,12 +103,19 @@
                                                                                "scripts/common/vibe-governance-helpers.ps1",
                                                                                "scripts/runtime/VibeRuntime.Common.ps1",
                                                                                "scripts/runtime/invoke-vibe-runtime.ps1",
+                                                                               "scripts/runtime/Invoke-PlanExecute.ps1",
                                                                                "scripts/verify/vibe-installed-runtime-freshness-gate.ps1",
                                                                                "scripts/verify/vibe-release-install-runtime-coherence-gate.ps1",
                                                                                "scripts/verify/vibe-governed-runtime-contract-gate.ps1",
+                                                                               "scripts/verify/vibe-benchmark-autonomous-proof-gate.ps1",
+                                                                               "scripts/verify/vibe-linux-router-no-pwsh-gate.ps1",
                                                                                "scripts/router/resolve-pack-route.ps1",
+                                                                               "scripts/router/invoke-pack-route.py",
+                                                                               "scripts/router/runtime_neutral/router_contract.py",
+                                                                               "scripts/verify/runtime_neutral/router_bridge_gate.py",
                                                                                "config/runtime-contract.json",
                                                                                "config/runtime-modes.json",
+                                                                               "config/benchmark-execution-policy.json",
                                                                                "config/requirement-doc-policy.json",
                                                                                "config/plan-execution-policy.json",
                                                                                "config/phase-cleanup-policy.json"

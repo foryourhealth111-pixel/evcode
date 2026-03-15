@@ -24,6 +24,8 @@ Those surfaces live under [`../status/README.md`](../status/README.md).
 
 ### Current Entry
 
+- [`2026-03-15-linux-router-host-neutrality-and-route-quality-recovery-plan.md`](./2026-03-15-linux-router-host-neutrality-and-route-quality-recovery-plan.md): Linux host-neutral router recovery 正式执行计划；聚焦无 `pwsh` 路由权威闭环、`confirm_required` 过保守收敛、planning/migration prompt 排名修复，以及 proof / promotion / release truth 一体收口。
+
 - [`2026-03-15-vco-governed-runtime-contract-plan.md`](./2026-03-15-vco-governed-runtime-contract-plan.md): `vibe` 统一治理入口正式方案；将 `vibe` 收敛为固定 6 段状态机、双运行模式、内部等级编排与 mandatory phase cleanup 的官方运行时契约。
 - [`2026-03-14-single-core-dual-adaptation-dual-proof-dual-release-plan.md`](./2026-03-14-single-core-dual-adaptation-dual-proof-dual-release-plan.md): 单核心、双适配、双证明、双发行正式方案；聚焦平台差异去分叉、installed runtime 行为证明、统一版本线与双发行治理。
 - [`2026-03-13-linux-full-authoritative-migration-plan.md`](./2026-03-13-linux-full-authoritative-migration-plan.md): Linux 满血权威迁移专项计划；聚焦去 PowerShell 中心化、runtime-neutral authoritative core、Linux 证明链闭环，以及严格零退化推广边界。
@@ -75,6 +77,7 @@ Those surfaces live under [`../status/README.md`](../status/README.md).
 
 | Date | Type | File | Focus |
 | --- | --- | --- | --- |
+| 2026-03-15 | recovery plan | [2026-03-15-linux-router-host-neutrality-and-route-quality-recovery-plan.md](./2026-03-15-linux-router-host-neutrality-and-route-quality-recovery-plan.md) | Linux host-neutral router authority recovery、route conservatism tuning、planning prompt rerank repair、path neutrality cleanup 与 proof-backed promotion |
 | 2026-03-15 | runtime contract plan | [2026-03-15-vco-governed-runtime-contract-plan.md](./2026-03-15-vco-governed-runtime-contract-plan.md) | `vibe` 统一治理入口、固定 6 段状态机、interactive / benchmark 双模式、内部等级编排与 mandatory phase cleanup |
 | 2026-03-14 | architecture plan | [2026-03-14-single-core-dual-adaptation-dual-proof-dual-release-plan.md](./2026-03-14-single-core-dual-adaptation-dual-proof-dual-release-plan.md) | 单核心、双适配、双证明、双发行；统一 root、shell、replay、release contract，避免平台双分叉 |
 | 2026-03-13 | migration plan | [2026-03-13-linux-full-authoritative-migration-plan.md](./2026-03-13-linux-full-authoritative-migration-plan.md) | Linux 满血权威迁移、runtime-neutral authoritative core、PowerShell-only gate 去中心化、零退化 promotion proof |

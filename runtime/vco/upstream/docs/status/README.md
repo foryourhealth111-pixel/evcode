@@ -27,6 +27,7 @@ It answers three questions:
 - [`platform-promotion-baseline-2026-03-13.md`](platform-promotion-baseline-2026-03-13.md): current platform-promotion truth snapshot
 - [`linux-pwsh-fresh-machine-evidence-ledger-2026-03-13.md`](linux-pwsh-fresh-machine-evidence-ledger-2026-03-13.md): Linux fresh-machine evidence ledger for the promoted `Linux + pwsh` authoritative lane
 - [`single-core-dual-adaptation-baseline-2026-03-14.md`](single-core-dual-adaptation-baseline-2026-03-14.md): first adapter-contract landing status for platform-neutral target roots, installed-runtime resolution, and shell spawning
+- [`router-platform-truth-matrix-2026-03-15.md`](router-platform-truth-matrix-2026-03-15.md): router-specific platform truth matrix for the Linux host-neutrality and route-quality recovery wave
 - [`path-dependency-census.md`](path-dependency-census.md): transitional blocker map for dependencies that still cannot be removed or relocated blindly
 - [`repo-cleanliness-baseline.md`](repo-cleanliness-baseline.md): dated inventory baseline for delta measurement, not a live dashboard
 

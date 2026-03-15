@@ -42,7 +42,7 @@ to:
 
 ## 3. Governed Runtime Source Of Truth
 
-The embedded VCO runtime source of truth is `vco-skills-codex` governed runtime family `v2.3.43`.
+The embedded VCO runtime source of truth is `vco-skills-codex` governed runtime family `v2.3.47`.
 
 EvCode must preserve the following VCO invariants:
 
