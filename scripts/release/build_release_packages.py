@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import tarfile
@@ -50,7 +51,7 @@ def resolve_bundled_host_binary(repo_root: Path, artifacts_root: Path, bundled_h
             "reason": "override",
         }
 
-    cargo_path = shutil.which("cargo")
+    cargo_path = os.environ.get("EVCODE_CARGO_REAL_BIN") or shutil.which("cargo")
     bundled_host_binary = None
     host_build_status = {
         "attempted": bool(cargo_path),

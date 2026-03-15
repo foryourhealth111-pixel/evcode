@@ -39,6 +39,11 @@ def main() -> int:
     parser.add_argument("--package", default="codex-cli", help="Cargo package to build")
     parser.add_argument("--binary-name", default="codex", help="Compiled host binary name")
     parser.add_argument(
+        "--rustup-toolchain",
+        default=os.environ.get("EVCODE_RUSTUP_TOOLCHAIN", "stable"),
+        help="Rustup toolchain override used for the patched host build",
+    )
+    parser.add_argument(
         "--jobs",
         type=int,
         default=int(os.environ.get("EVCODE_CARGO_BUILD_JOBS", "2")),
@@ -58,9 +63,21 @@ def main() -> int:
     subprocess.run(["git", "apply", str(patch_file)], cwd=workdir, check=True)
 
     cargo_root = workdir / "codex-rs"
+    cargo_bin_path = Path(args.cargo_bin).resolve()
+    toolchain_bin = cargo_bin_path.parent
+    rustc_bin = toolchain_bin / "rustc"
+    build_env = {
+        **os.environ,
+        "RUSTUP_TOOLCHAIN": args.rustup_toolchain,
+        "PATH": f"{toolchain_bin}{os.pathsep}{os.environ.get('PATH', '')}",
+    }
+    if rustc_bin.exists():
+        build_env["RUSTC"] = str(rustc_bin)
+
     subprocess.run(
         [args.cargo_bin, "build", "-p", args.package, "--release", "--jobs", str(args.jobs)],
         cwd=cargo_root,
+        env=build_env,
         check=True,
     )
 
