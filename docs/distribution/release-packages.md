@@ -33,6 +33,19 @@ Require a bundled patched host:
 python3 scripts/release/build_release_packages.py --require-patched-host
 ```
 
+Publish the GitHub release after the tag exists:
+
+```bash
+python3 scripts/release/publish_github_release.py \
+  --owner foryourhealth111-pixel \
+  --repo evcode \
+  --tag v0.1.0 \
+  --asset dist/releases/evcode-v0.1.0/artifacts/evcode-standard-v0.1.0.tar.gz \
+  --asset dist/releases/evcode-v0.1.0/artifacts/evcode-benchmark-v0.1.0.tar.gz
+```
+
+The script reads the GitHub token from stdin so it does not need to be stored in the repository.
+
 ## Patched Host Behavior
 
 If `cargo` is available, the release builder will:
