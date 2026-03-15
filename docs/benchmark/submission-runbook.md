@@ -2,7 +2,7 @@
 
 ## Goal
 
-This runbook defines the minimum repeatable path for assembling and smoke-testing the benchmark distribution.
+This runbook defines the minimum repeatable path for assembling and smoke-testing the benchmark distribution without polluting the task workspace.
 
 ## Core Rules
 
@@ -10,6 +10,8 @@ This runbook defines the minimum repeatable path for assembling and smoke-testin
 - benchmark mode must run as `benchmark_autonomous`
 - no human follow-up is allowed once task execution starts
 - the core benchmark closure must not require external MCP availability
+- benchmark artifacts must live outside the task workspace
+- each benchmark run materializes an isolated `CODEX_HOME` with `mcp_servers = {}`
 
 ## Required Environment
 
@@ -23,6 +25,7 @@ Optional benchmark execution overrides:
 - `EVCODE_BENCH_HOST_BIN`: explicit host binary path
 - `EVCODE_BENCHMARK_EXECUTOR`: shell-style command template used instead of the default host path
 - `EVCODE_BENCHMARK_EXEC_TIMEOUT_SEC`: execution timeout for the benchmark bridge
+- `EVCODE_BENCH_ENTRYPOINT`: installed-agent wrapper override for `evcode-bench`
 
 Supported placeholders inside `EVCODE_BENCHMARK_EXECUTOR`:
 
@@ -45,25 +48,53 @@ python3 scripts/build/assemble_distribution.py \
 ## Local Smoke
 
 ```bash
+ARTIFACTS_ROOT="$(mktemp -d /tmp/evcode-bench-artifacts-XXXXXX)"
+
 node apps/evcode-bench/bin/evcode-bench.js run \
   --task "Solve the benchmark task end-to-end without asking follow-up questions." \
   --workspace "$PWD" \
-  --artifacts-root "$PWD/.bench-artifacts" \
-  --result-json "$PWD/.bench-artifacts/result.json"
+  --artifacts-root "$ARTIFACTS_ROOT" \
+  --result-json "$ARTIFACTS_ROOT/result.json"
 ```
 
 Expected outputs:
 
-- `docs/requirements/...`
-- `docs/plans/...`
-- `outputs/runtime/vibe-sessions/<run-id>/phase-execute.json`
-- `outputs/runtime/vibe-sessions/<run-id>/cleanup-receipt.json`
-- benchmark `result.json`
+- external `docs/requirements/...`
+- external `docs/plans/...`
+- external `outputs/runtime/vibe-sessions/<run-id>/phase-execute.json`
+- external `outputs/runtime/vibe-sessions/<run-id>/cleanup-receipt.json`
+- external benchmark `result.json`
+- no `docs/` or `outputs/` directories created in the task workspace
+
+## Official Mode vs Debug Mode
+
+- Official mode:
+  - use the default `codex exec` path
+  - let EvCode create its per-run isolated `CODEX_HOME`
+  - point `--artifacts-root` to a directory outside the task workspace
+  - do not enable MCP or workstation-specific config
+- Debug mode:
+  - optionally set `EVCODE_BENCH_HOST_BIN` to a local host build
+  - optionally set `EVCODE_BENCHMARK_EXECUTOR` to a custom wrapper
+  - keep debug-only traces under a separate external artifacts directory
 
 ## Harbor / Terminal-Bench Import Paths
 
 - `packages.benchmark-adapter.python.harbor_evcode_agent:HarborEvCodeAgent`
 - `packages.benchmark-adapter.python.terminal_bench_evcode_agent:TerminalBenchEvCodeAgent`
+
+Harbor route:
+
+- `HarborEvCodeAgent` is the preferred first submission path
+- it is shaped to subclass a Harbor / Terminal-Bench `BaseAgent` when the official package is installed
+- it uses `logging_dir` or `artifacts_root` as the external artifact directory
+
+Terminal-Bench installed-agent route:
+
+- `TerminalBenchEvCodeAgent` exposes `_install_agent_script_path`, `_run_agent_commands`, and `_env`
+- the bundled `setup.sh` installs an `evcode-bench` wrapper and expects either:
+  - `EVCODE_BENCH_ENTRYPOINT`, or
+  - `EVCODE_REPO_ROOT`
 
 ## Proof Ladder
 

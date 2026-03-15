@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+import tempfile
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -73,6 +74,22 @@ def detect_existing_artifacts(artifacts_root: Path) -> dict[str, str | None]:
         "latest_requirement_doc": str(latest_requirement) if latest_requirement else None,
         "latest_execution_plan": str(latest_plan) if latest_plan else None,
     }
+
+
+def path_is_within(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def ensure_benchmark_artifacts_root(artifacts_root: Path, workspace: Path, run_id: str) -> tuple[Path, bool]:
+    if path_is_within(artifacts_root, workspace):
+        redirected = Path(tempfile.mkdtemp(prefix=f"evcode-bench-artifacts-{run_id}-")).resolve()
+        return redirected, True
+    artifacts_root.mkdir(parents=True, exist_ok=True)
+    return artifacts_root.resolve(), False
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> Path:
@@ -203,16 +220,27 @@ def build_execution_plan(config: GovernedRuntimeConfig, intent: dict[str, Any], 
 def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
     slug = slugify(config.task)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    session_root = config.artifacts_root / "outputs" / "runtime" / "vibe-sessions" / config.run_id
+    effective_artifacts_root = config.artifacts_root.resolve()
+    artifacts_redirected = False
+    if config.channel == "benchmark":
+        effective_artifacts_root, artifacts_redirected = ensure_benchmark_artifacts_root(
+            config.artifacts_root,
+            config.workspace,
+            config.run_id,
+        )
+
+    session_root = effective_artifacts_root / "outputs" / "runtime" / "vibe-sessions" / config.run_id
     session_root.mkdir(parents=True, exist_ok=True)
 
-    existing = detect_existing_artifacts(config.artifacts_root)
+    existing = detect_existing_artifacts(effective_artifacts_root)
     skeleton_receipt = {
         "run_id": config.run_id,
         "mode": config.mode,
         "workspace": str(config.workspace),
         "repo_root": str(config.repo_root),
-        "artifacts_root": str(config.artifacts_root),
+        "requested_artifacts_root": str(config.artifacts_root),
+        "effective_artifacts_root": str(effective_artifacts_root),
+        "artifacts_redirected": artifacts_redirected,
         "existing": existing,
         "generated_at": utc_now(),
     }
@@ -221,7 +249,7 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
     intent = build_intent_contract(config)
     intent_path = write_json(session_root / "intent-contract.json", intent)
 
-    requirement_doc_path = config.artifacts_root / "docs" / "requirements" / f"{date}-{slug}.md"
+    requirement_doc_path = effective_artifacts_root / "docs" / "requirements" / f"{date}-{slug}.md"
     write_text(requirement_doc_path, build_requirement_doc(config, intent))
     requirement_receipt_path = write_json(
         session_root / "requirement-receipt.json",
@@ -233,7 +261,7 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
         },
     )
 
-    execution_plan_path = config.artifacts_root / "docs" / "plans" / f"{date}-{slug}-execution-plan.md"
+    execution_plan_path = effective_artifacts_root / "docs" / "plans" / f"{date}-{slug}-execution-plan.md"
     write_text(execution_plan_path, build_execution_plan(config, intent, requirement_doc_path))
     execution_plan_receipt_path = write_json(
         session_root / "execution-plan-receipt.json",
@@ -270,6 +298,7 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
                 channel=config.channel,
                 profile=config.profile,
                 mode=config.mode,
+                artifacts_root=effective_artifacts_root,
                 result_json_path=config.result_json_path,
             )
         )
@@ -306,6 +335,9 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
         "task": config.task,
         "stage_order": FIXED_STAGE_ORDER,
         "artifacts": {
+            "requested_artifacts_root": str(config.artifacts_root),
+            "effective_artifacts_root": str(effective_artifacts_root),
+            "artifacts_redirected": artifacts_redirected,
             "session_root": str(session_root),
             "skeleton_receipt": str(skeleton_receipt_path),
             "intent_contract": str(intent_path),

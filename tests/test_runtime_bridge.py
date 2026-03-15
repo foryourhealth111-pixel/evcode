@@ -53,23 +53,25 @@ class RuntimeBridgeTests(unittest.TestCase):
     def test_benchmark_run_writes_governed_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp_root = Path(tempdir)
-            executor_script = temp_root / "fake_executor.py"
-            executor_script.write_text(
-                """from __future__ import annotations
-import argparse
-import json
+            workspace = temp_root / "workspace"
+            workspace.mkdir()
+            fake_codex = temp_root / "fake_codex"
+            fake_codex.write_text(
+                """#!/usr/bin/env python3
+from __future__ import annotations
+import sys
 from pathlib import Path
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--task-file", required=True)
-parser.add_argument("--result-json", required=True)
-parser.add_argument("--workspace", required=True)
-parser.add_argument("--run-dir", required=True)
-args = parser.parse_args()
-Path(args.result_json).write_text(json.dumps({"status": "completed", "executor": "runtime-bridge-fake"}, indent=2), encoding="utf-8")
+argv = sys.argv[1:]
+for index, token in enumerate(argv):
+    if token == "--output-last-message":
+        Path(argv[index + 1]).write_text("runtime bridge benchmark completed", encoding="utf-8")
+        break
+sys.exit(0)
 """,
                 encoding="utf-8",
             )
+            fake_codex.chmod(0o755)
             completed = subprocess.run(
                 [
                     "node",
@@ -77,6 +79,8 @@ Path(args.result_json).write_text(json.dumps({"status": "completed", "executor":
                     "run",
                     "--task",
                     "Build a benchmark-safe autonomous runtime smoke test with proof artifacts",
+                    "--workspace",
+                    str(workspace),
                     "--artifacts-root",
                     tempdir,
                     "--run-id",
@@ -88,7 +92,7 @@ Path(args.result_json).write_text(json.dumps({"status": "completed", "executor":
                 check=True,
                 env={
                     **os.environ,
-                    "EVCODE_BENCHMARK_EXECUTOR": f"python3 {executor_script} --task-file {{task_file}} --result-json {{result_json}} --workspace {{workspace}} --run-dir {{run_dir}}",
+                    "EVCODE_BENCH_HOST_BIN": str(fake_codex),
                 },
             )
             payload = json.loads(completed.stdout)
@@ -97,6 +101,8 @@ Path(args.result_json).write_text(json.dumps({"status": "completed", "executor":
             requirement_doc = Path(payload["artifacts"]["requirement_doc"])
             self.assertIn("Assumptions", requirement_doc.read_text(encoding="utf-8"))
             self.assertTrue(Path(payload["artifacts"]["benchmark_result"]).exists())
+            self.assertFalse((workspace / "docs").exists())
+            self.assertFalse((workspace / "outputs").exists())
 
 
 if __name__ == "__main__":

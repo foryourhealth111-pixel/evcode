@@ -61,6 +61,8 @@ class EvCodeBenchmarkAdapter:
         )
         runtime_summary = json.loads(completed.stdout)
         session_root = Path(runtime_summary["artifacts"]["session_root"])
+        result_json_resolved = runtime_summary["artifacts"].get("benchmark_result") or str(result_json_path)
+        result_payload = json.loads(Path(result_json_resolved).read_text(encoding="utf-8"))
         summary = {
             "run_id": run_id,
             "channel": self.config.channel,
@@ -71,7 +73,10 @@ class EvCodeBenchmarkAdapter:
             "stage_order": FIXED_STAGE_ORDER,
             "command": command,
             "runtime_summary_path": runtime_summary["summary_path"],
-            "result_json_path": runtime_summary["artifacts"].get("benchmark_result") or str(result_json_path),
+            "result_json_path": result_json_resolved,
+            "status": result_payload.get("status"),
+            "exit_code": result_payload.get("exit_code"),
+            "failure_type": result_payload.get("failure_type"),
         }
         summary_path = session_root / "benchmark-adapter-summary.json"
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")

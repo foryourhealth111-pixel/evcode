@@ -12,38 +12,49 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 class BenchmarkExecutionBridgeTests(unittest.TestCase):
-    def test_benchmark_run_executes_bridge_and_writes_result_json(self) -> None:
+    def test_benchmark_run_uses_default_host_flags_and_keeps_workspace_clean(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             temp_root = Path(tempdir)
-            executor_script = temp_root / "fake_executor.py"
-            executor_script.write_text(
-                """from __future__ import annotations
-import argparse
+            workspace = temp_root / "workspace"
+            workspace.mkdir()
+            artifacts_root = temp_root / "artifacts"
+            args_log = temp_root / "fake_codex_args.json"
+            fake_codex = temp_root / "fake_codex"
+            fake_codex.write_text(
+                """#!/usr/bin/env python3
+from __future__ import annotations
 import json
+import os
+import sys
 from pathlib import Path
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--task-file", required=True)
-parser.add_argument("--result-json", required=True)
-parser.add_argument("--workspace", required=True)
-parser.add_argument("--run-dir", required=True)
-args = parser.parse_args()
-task_text = Path(args.task_file).read_text(encoding="utf-8")
+argv = sys.argv[1:]
+output_path = None
+for index, token in enumerate(argv):
+    if token == "--output-last-message":
+        output_path = argv[index + 1]
+        break
+
 payload = {
-    "status": "completed",
-    "executor": "fake",
-    "workspace": args.workspace,
-    "task_excerpt": task_text.splitlines()[-1],
+    "argv": argv,
+    "cwd": os.getcwd(),
+    "codex_home": os.environ.get("CODEX_HOME"),
+    "workspace_root": os.environ.get("EVCODE_WORKSPACE_ROOT"),
+    "artifacts_root": os.environ.get("EVCODE_BENCHMARK_ARTIFACTS_ROOT"),
 }
-Path(args.result_json).write_text(json.dumps(payload, indent=2), encoding="utf-8")
-print(json.dumps(payload))
+Path(os.environ["FAKE_CODEX_ARGS_LOG"]).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+if output_path:
+    Path(output_path).write_text("benchmark completed", encoding="utf-8")
+sys.exit(0)
 """,
                 encoding="utf-8",
             )
-            result_json_path = temp_root / "bench-out" / "result.json"
+            fake_codex.chmod(0o755)
+
             env = {
                 **os.environ,
-                "EVCODE_BENCHMARK_EXECUTOR": f"python3 {executor_script} --task-file {{task_file}} --result-json {{result_json}} --workspace {{workspace}} --run-dir {{run_dir}}",
+                "EVCODE_BENCH_HOST_BIN": str(fake_codex),
+                "FAKE_CODEX_ARGS_LOG": str(args_log),
             }
             completed = subprocess.run(
                 [
@@ -53,13 +64,11 @@ print(json.dumps(payload))
                     "--task",
                     "Implement benchmark bridge smoke execution",
                     "--workspace",
-                    str(REPO_ROOT),
+                    str(workspace),
                     "--artifacts-root",
-                    tempdir,
+                    str(artifacts_root),
                     "--run-id",
                     "benchmark-bridge-smoke",
-                    "--result-json",
-                    str(result_json_path),
                 ],
                 cwd=REPO_ROOT,
                 capture_output=True,
@@ -67,13 +76,89 @@ print(json.dumps(payload))
                 check=True,
                 env=env,
             )
+
             payload = json.loads(completed.stdout)
-            execute_receipt = Path(payload["artifacts"]["execute_receipt"])
-            self.assertTrue(execute_receipt.exists())
-            self.assertEqual(str(result_json_path), payload["artifacts"]["benchmark_result"])
+            summary_artifacts = payload["artifacts"]
+            self.assertEqual(str(artifacts_root.resolve()), summary_artifacts["effective_artifacts_root"])
+            self.assertFalse(summary_artifacts["artifacts_redirected"])
+            self.assertFalse((workspace / "docs").exists())
+            self.assertFalse((workspace / "outputs").exists())
+
+            result_json_path = Path(summary_artifacts["benchmark_result"])
+            self.assertTrue(result_json_path.exists())
             result_payload = json.loads(result_json_path.read_text(encoding="utf-8"))
             self.assertEqual("completed", result_payload["status"])
-            self.assertEqual("fake", result_payload["executor"])
+            self.assertTrue(Path(result_payload["codex_home"]).exists())
+            config_toml = Path(result_payload["codex_home"]) / "config.toml"
+            self.assertIn("[mcp_servers]", config_toml.read_text(encoding="utf-8"))
+            args_payload = json.loads(args_log.read_text(encoding="utf-8"))
+            self.assertEqual(str(workspace.resolve()), args_payload["cwd"])
+            self.assertEqual(str(workspace.resolve()), args_payload["workspace_root"])
+            self.assertEqual(str(artifacts_root.resolve()), args_payload["artifacts_root"])
+
+            command = result_payload["command"]
+            self.assertIn("--skip-git-repo-check", command)
+            self.assertIn("--profile", command)
+            self.assertIn("benchmark", command)
+            self.assertIn("--ephemeral", command)
+            self.assertIn("--output-last-message", command)
+            self.assertIn("mcp_servers={}", command)
+
+    def test_benchmark_run_redirects_artifacts_root_when_it_points_inside_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            temp_root = Path(tempdir)
+            workspace = temp_root / "workspace"
+            workspace.mkdir()
+            leaky_artifacts_root = workspace / "should-not-be-used"
+            fake_codex = temp_root / "fake_codex"
+            fake_codex.write_text(
+                """#!/usr/bin/env python3
+from __future__ import annotations
+import sys
+from pathlib import Path
+
+argv = sys.argv[1:]
+for index, token in enumerate(argv):
+    if token == "--output-last-message":
+        Path(argv[index + 1]).write_text("redirected", encoding="utf-8")
+        break
+sys.exit(0)
+""",
+                encoding="utf-8",
+            )
+            fake_codex.chmod(0o755)
+            env = {
+                **os.environ,
+                "EVCODE_BENCH_HOST_BIN": str(fake_codex),
+            }
+            completed = subprocess.run(
+                [
+                    "node",
+                    str(REPO_ROOT / "apps" / "evcode-bench" / "bin" / "evcode-bench.js"),
+                    "run",
+                    "--task",
+                    "Redirect benchmark artifacts outside the task workspace",
+                    "--workspace",
+                    str(workspace),
+                    "--artifacts-root",
+                    str(leaky_artifacts_root),
+                    "--run-id",
+                    "benchmark-bridge-redirect",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+                env=env,
+            )
+
+            payload = json.loads(completed.stdout)
+            effective_root = Path(payload["artifacts"]["effective_artifacts_root"])
+            self.assertTrue(payload["artifacts"]["artifacts_redirected"])
+            self.assertNotEqual(effective_root, leaky_artifacts_root.resolve())
+            self.assertFalse((workspace / "docs").exists())
+            self.assertFalse((workspace / "outputs").exists())
+            self.assertTrue(Path(payload["artifacts"]["benchmark_result"]).exists())
 
 
 if __name__ == "__main__":

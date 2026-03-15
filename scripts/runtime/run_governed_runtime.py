@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import tempfile
 from pathlib import Path
 
 from runtime_lib import GovernedRuntimeConfig, new_run_id, write_runtime_session
@@ -22,8 +23,13 @@ def main() -> int:
 
     repo_root = Path(args.repo_root).resolve()
     workspace = Path(args.workspace).resolve() if args.workspace else repo_root
-    artifacts_root = Path(args.artifacts_root).resolve() if args.artifacts_root else repo_root
     run_id = args.run_id or new_run_id("governed")
+    if args.artifacts_root:
+        artifacts_root = Path(args.artifacts_root).resolve()
+    elif args.channel == "benchmark":
+        artifacts_root = Path(tempfile.mkdtemp(prefix=f"evcode-bench-artifacts-{run_id}-")).resolve()
+    else:
+        artifacts_root = repo_root
     result_json_path = Path(args.result_json).resolve() if args.result_json else None
 
     summary = write_runtime_session(

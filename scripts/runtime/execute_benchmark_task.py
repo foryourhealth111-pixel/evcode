@@ -6,6 +6,7 @@ import os
 import shlex
 import shutil
 import subprocess
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,7 +18,10 @@ No user will answer follow-up questions.
 Do not pause for confirmation.
 If the task is ambiguous, record your assumptions and continue.
 Prefer local files, command outputs, and tests to resolve uncertainty.
-If you spawn subagents, every child-task prompt must end with ` $vibe`.
+Do not write governance artifacts, receipts, docs/requirements, docs/plans, or outputs/runtime into the task workspace.
+Only modify files required by the task itself.
+If you need scratch files, logs, notes, or receipts, keep them outside the task workspace.
+If you spawn subagents, every child-task prompt must end with ` $vibe`, but keep execution in benchmark fast-path mode.
 """
 
 
@@ -31,6 +35,7 @@ class BenchmarkExecutionConfig:
     channel: str
     profile: str
     mode: str
+    artifacts_root: Path
     result_json_path: Path | None = None
 
 
@@ -38,8 +43,54 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def build_prompt(task: str) -> str:
-    return f"{BENCHMARK_PREFACE}\nTask:\n{task}\n\nComplete the task end-to-end without asking the user for clarification. $vibe"
+def build_prompt(task: str, artifacts_root: Path) -> str:
+    return (
+        f"{BENCHMARK_PREFACE}\n"
+        f"External artifacts root: {artifacts_root}\n\n"
+        f"Task:\n{task}\n\n"
+        "Complete the task end-to-end without asking the user for clarification."
+    )
+
+
+def path_is_within(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def ensure_external_artifact_path(path: Path, workspace: Path, *, suffix: str, run_id: str) -> Path:
+    if path_is_within(path, workspace):
+        redirected_root = Path(tempfile.mkdtemp(prefix=f"evcode-bench-{run_id}-"))
+        return redirected_root / suffix
+    return path
+
+
+def build_benchmark_codex_config(workspace: Path) -> str:
+    workspace_posix = workspace.resolve().as_posix()
+    return "\n".join(
+        [
+            'profile = "benchmark"',
+            "disable_cron = true",
+            "",
+            "[profiles.benchmark]",
+            "disable_cron = true",
+            "",
+            f'[projects."{workspace_posix}"]',
+            'trust_level = "trusted"',
+            "",
+            "[mcp_servers]",
+            "",
+        ]
+    )
+
+
+def materialize_benchmark_codex_home(config: BenchmarkExecutionConfig) -> Path:
+    codex_home = config.session_root / "codex-home"
+    codex_home.mkdir(parents=True, exist_ok=True)
+    (codex_home / "config.toml").write_text(build_benchmark_codex_config(config.workspace), encoding="utf-8")
+    return codex_home
 
 
 def resolve_host_binary(repo_root: Path, channel: str) -> str | None:
@@ -76,7 +127,7 @@ def render_executor_command(template: str, *, prompt_file: Path, workspace: Path
     return shlex.split(rendered)
 
 
-def build_command(config: BenchmarkExecutionConfig, prompt_file: Path, result_json_path: Path) -> list[str]:
+def build_command(config: BenchmarkExecutionConfig, prompt_file: Path, result_json_path: Path, assistant_output_path: Path) -> list[str]:
     template = os.environ.get("EVCODE_BENCHMARK_EXECUTOR")
     host_bin = resolve_host_binary(config.repo_root, config.channel)
     if template:
@@ -90,7 +141,26 @@ def build_command(config: BenchmarkExecutionConfig, prompt_file: Path, result_js
         )
     if not host_bin:
         raise RuntimeError("No benchmark executor configured and no codex-compatible host binary was found.")
-    return [host_bin, "exec", "--cd", str(config.workspace), prompt_file.read_text(encoding="utf-8")]
+    return [
+        host_bin,
+        "exec",
+        "--skip-git-repo-check",
+        "--cd",
+        str(config.workspace),
+        "--color",
+        "never",
+        "--sandbox",
+        "workspace-write",
+        "--full-auto",
+        "--profile",
+        "benchmark",
+        "--ephemeral",
+        "--output-last-message",
+        str(assistant_output_path),
+        "-c",
+        "mcp_servers={}",
+        prompt_file.read_text(encoding="utf-8"),
+    ]
 
 
 def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
@@ -99,9 +169,16 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
     prompt_file = run_dir / "benchmark-prompt.txt"
     stdout_path = run_dir / "benchmark.stdout.txt"
     stderr_path = run_dir / "benchmark.stderr.txt"
-    result_json_path = config.result_json_path or (run_dir / "result.json")
-    prompt_file.write_text(build_prompt(config.task), encoding="utf-8")
+    assistant_output_path = run_dir / "assistant-last-message.txt"
+    result_json_path = ensure_external_artifact_path(
+        config.result_json_path or (config.artifacts_root / config.run_id / "result.json"),
+        config.workspace,
+        suffix="result.json",
+        run_id=config.run_id,
+    )
+    prompt_file.write_text(build_prompt(config.task, config.artifacts_root), encoding="utf-8")
     result_json_path.parent.mkdir(parents=True, exist_ok=True)
+    codex_home = materialize_benchmark_codex_home(config)
 
     timeout_sec = int(os.environ.get("EVCODE_BENCHMARK_EXEC_TIMEOUT_SEC", "1800"))
     command: list[str] | None = None
@@ -109,7 +186,14 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
     exit_code: int | None = None
 
     try:
-        command = build_command(config, prompt_file, result_json_path)
+        command = build_command(config, prompt_file, result_json_path, assistant_output_path)
+        exec_env = {
+            **os.environ,
+            "CODEX_HOME": str(codex_home),
+            "EVCODE_BENCHMARK_FAST_PATH": "1",
+            "EVCODE_BENCHMARK_ARTIFACTS_ROOT": str(config.artifacts_root),
+            "EVCODE_WORKSPACE_ROOT": str(config.workspace),
+        }
         with stdout_path.open("w", encoding="utf-8") as stdout_handle, stderr_path.open("w", encoding="utf-8") as stderr_handle:
             completed = subprocess.run(
                 command,
@@ -119,6 +203,7 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
                 text=True,
                 check=False,
                 timeout=timeout_sec,
+                env=exec_env,
             )
         exit_code = completed.returncode
         status = "completed" if completed.returncode == 0 else "executor_failed"
@@ -151,6 +236,8 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "failure_type": existing_payload.get("failure_type", failure_type),
         "command": existing_payload.get("command", command),
         "prompt_file": str(prompt_file),
+        "assistant_output_path": str(assistant_output_path),
+        "codex_home": str(codex_home),
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
         "generated_at": utc_now(),
@@ -168,6 +255,8 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "failure_type": result_payload["failure_type"],
         "command": result_payload["command"],
         "prompt_file": str(prompt_file),
+        "assistant_output_path": str(assistant_output_path),
+        "codex_home": str(codex_home),
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
         "result_json_path": str(result_json_path),
@@ -190,6 +279,7 @@ def main() -> int:
     parser.add_argument("--workspace", required=True)
     parser.add_argument("--repo-root", required=True)
     parser.add_argument("--session-root", required=True)
+    parser.add_argument("--artifacts-root", required=True)
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--channel", required=True)
     parser.add_argument("--profile", required=True)
@@ -207,6 +297,7 @@ def main() -> int:
             channel=args.channel,
             profile=args.profile,
             mode=args.mode,
+            artifacts_root=Path(args.artifacts_root).resolve(),
             result_json_path=Path(args.result_json).resolve() if args.result_json else None,
         )
     )

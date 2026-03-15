@@ -8,6 +8,8 @@ Goals:
 - preserve the fixed 6-stage order
 - emit requirement, plan, execute, cleanup receipts, and benchmark `result.json`
 - avoid creating a second orchestrator
+- keep benchmark artifacts outside the task workspace
+- isolate benchmark runs from host-global `CODEX_HOME` / MCP state
 
 Thin adapter entrypoints:
 

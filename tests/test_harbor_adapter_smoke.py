@@ -5,7 +5,9 @@ import json
 import os
 import sys
 import tempfile
+import types
 import unittest
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -22,9 +24,42 @@ def load_module(module_name: str, file_path: Path):
     return module
 
 
+def install_terminal_bench_base_agent_stub() -> type:
+    for name in [
+        "terminal_bench",
+        "terminal_bench.agents",
+        "terminal_bench.agents.base_agent",
+    ]:
+        sys.modules.pop(name, None)
+
+    terminal_bench = types.ModuleType("terminal_bench")
+    agents = types.ModuleType("terminal_bench.agents")
+    base_agent = types.ModuleType("terminal_bench.agents.base_agent")
+
+    class BaseAgent:
+        pass
+
+    @dataclass
+    class AgentResult:
+        failure_mode: str | None = None
+        metadata: dict | None = None
+
+    base_agent.BaseAgent = BaseAgent
+    base_agent.AgentResult = AgentResult
+    agents.BaseAgent = BaseAgent
+    agents.AgentResult = AgentResult
+    terminal_bench.agents = agents
+
+    sys.modules["terminal_bench"] = terminal_bench
+    sys.modules["terminal_bench.agents"] = agents
+    sys.modules["terminal_bench.agents.base_agent"] = base_agent
+    return BaseAgent
+
+
 class HarborAdapterSmokeTests(unittest.TestCase):
-    def test_harbor_style_agent_delegates_to_benchmark_adapter(self) -> None:
-        adapter_module = load_module(
+    def test_harbor_agent_exposes_base_agent_surface_and_runs_benchmark_adapter(self) -> None:
+        BaseAgent = install_terminal_bench_base_agent_stub()
+        load_module(
             "evcode_benchmark_adapter",
             REPO_ROOT / "packages" / "benchmark-adapter" / "python" / "evcode_benchmark_adapter.py",
         )
@@ -33,46 +68,52 @@ class HarborAdapterSmokeTests(unittest.TestCase):
             REPO_ROOT / "packages" / "benchmark-adapter" / "python" / "harbor_evcode_agent.py",
         )
         HarborEvCodeAgent = harbor_module.HarborEvCodeAgent
-        self.assertIsNotNone(adapter_module.EvCodeBenchmarkAdapter)
+        self.assertTrue(issubclass(HarborEvCodeAgent, BaseAgent))
 
         with tempfile.TemporaryDirectory() as tempdir:
             temp_root = Path(tempdir)
-            executor_script = temp_root / "fake_executor.py"
-            executor_script.write_text(
-                """from __future__ import annotations
-import argparse
-import json
+            workspace = temp_root / "workspace"
+            workspace.mkdir()
+            fake_codex = temp_root / "fake_codex"
+            fake_codex.write_text(
+                """#!/usr/bin/env python3
+from __future__ import annotations
+import sys
 from pathlib import Path
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--task-file", required=True)
-parser.add_argument("--result-json", required=True)
-parser.add_argument("--workspace", required=True)
-parser.add_argument("--run-dir", required=True)
-args = parser.parse_args()
-Path(args.result_json).write_text(json.dumps({"status": "completed", "executor": "harbor-fake"}, indent=2), encoding="utf-8")
+argv = sys.argv[1:]
+for index, token in enumerate(argv):
+    if token == "--output-last-message":
+        Path(argv[index + 1]).write_text("harbor smoke completed", encoding="utf-8")
+        break
+sys.exit(0)
 """,
                 encoding="utf-8",
             )
-            old_executor = os.environ.get("EVCODE_BENCHMARK_EXECUTOR")
-            os.environ["EVCODE_BENCHMARK_EXECUTOR"] = f"python3 {executor_script} --task-file {{task_file}} --result-json {{result_json}} --workspace {{workspace}} --run-dir {{run_dir}}"
+            fake_codex.chmod(0o755)
+
+            old_host_bin = os.environ.get("EVCODE_BENCH_HOST_BIN")
+            os.environ["EVCODE_BENCH_HOST_BIN"] = str(fake_codex)
             try:
                 agent = HarborEvCodeAgent(REPO_ROOT)
                 result = agent.perform_task(
                     task_description="Harbor smoke benchmark task",
-                    artifacts_root=temp_root,
-                    workspace=str(REPO_ROOT),
+                    logging_dir=temp_root,
+                    workspace=str(workspace),
                 )
             finally:
-                if old_executor is None:
-                    os.environ.pop("EVCODE_BENCHMARK_EXECUTOR", None)
+                if old_host_bin is None:
+                    os.environ.pop("EVCODE_BENCH_HOST_BIN", None)
                 else:
-                    os.environ["EVCODE_BENCHMARK_EXECUTOR"] = old_executor
+                    os.environ["EVCODE_BENCH_HOST_BIN"] = old_host_bin
 
-            self.assertTrue(Path(result["summary_path"]).exists())
-            result_payload = json.loads(Path(result["result_json_path"]).read_text(encoding="utf-8"))
+            self.assertIsNone(result.failure_mode)
+            metadata = result.metadata["evcode"]
+            self.assertTrue(Path(metadata["summary_path"]).exists())
+            result_payload = json.loads(Path(metadata["result_json_path"]).read_text(encoding="utf-8"))
             self.assertEqual("completed", result_payload["status"])
-            self.assertEqual("harbor-fake", result_payload["executor"])
+            self.assertFalse((workspace / "docs").exists())
+            self.assertFalse((workspace / "outputs").exists())
 
 
 if __name__ == "__main__":
