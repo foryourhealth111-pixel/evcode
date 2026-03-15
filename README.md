@@ -1,5 +1,13 @@
 # EvCode
 
+EvCode is now **source-build-first**.
+
+The primary audience is:
+
+- developers
+- benchmark users
+- users who want to reproduce and inspect the host patch locally
+
 EvCode is intended to be:
 
 - Codex itself
@@ -7,6 +15,36 @@ EvCode is intended to be:
 - plus one native per-turn governance hook
 
 It is **not** intended to be a wrapper-owned shell or an external governance sidecar.
+
+## Primary Install Path
+
+EvCode does **not** require a preinstalled `codex`.
+
+The canonical local install path is:
+
+1. install source-build dependencies
+2. build the patched host from vendored upstream
+3. assemble a local EvCode distribution that embeds the bundled host
+
+Start here:
+
+```bash
+scripts/install/check_build_deps.sh --channel standard
+scripts/install/build_from_source.sh
+```
+
+Benchmark users should use:
+
+```bash
+scripts/install/check_build_deps.sh --channel benchmark
+scripts/install/build_benchmark_from_source.sh
+```
+
+Install references:
+
+- [docs/install/build-from-source.md](/home/lqf/table/table3/docs/install/build-from-source.md)
+- [docs/install/benchmark-build.md](/home/lqf/table/table3/docs/install/benchmark-build.md)
+- [docs/install/system-deps.md](/home/lqf/table/table3/docs/install/system-deps.md)
 
 ## Product Baseline
 
@@ -53,7 +91,7 @@ The current design direction is:
   - `EvCode`
   - `EvCode Bench`
 
-## Current Local Usage
+## Repository Usage
 
 Standard channel:
 
@@ -89,7 +127,9 @@ What these commands now do:
 
 Formal release note:
 
-- official release packages are expected to be self-contained and should be built without `--allow-system-host`
+- official release packages are convenience artifacts
+- source build remains the primary installation contract for advanced users
+- formal release packages are still expected to be self-contained and should be built without `--allow-system-host`
 - `--allow-system-host` exists only for local development when Rust/cargo is unavailable
 
 Hard-equivalence note:
