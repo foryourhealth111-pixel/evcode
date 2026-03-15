@@ -41,6 +41,7 @@ class EvCodeBenchmarkAdapter:
 
     def perform_task(self, task_description: str, artifacts_root: Path, workspace: str | None = None) -> dict:
         run_id = f"bench-{uuid.uuid4().hex[:12]}"
+        result_json_path = Path(artifacts_root) / run_id / "result.json"
         command = self.build_command(task_description) + [
             "--workspace",
             workspace or str(self.repo_root),
@@ -48,6 +49,8 @@ class EvCodeBenchmarkAdapter:
             str(artifacts_root),
             "--run-id",
             run_id,
+            "--result-json",
+            str(result_json_path),
         ]
         completed = subprocess.run(
             command,
@@ -68,10 +71,12 @@ class EvCodeBenchmarkAdapter:
             "stage_order": FIXED_STAGE_ORDER,
             "command": command,
             "runtime_summary_path": runtime_summary["summary_path"],
+            "result_json_path": runtime_summary["artifacts"].get("benchmark_result") or str(result_json_path),
         }
         summary_path = session_root / "benchmark-adapter-summary.json"
         summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
         return {
             "summary_path": str(summary_path),
+            "result_json_path": summary["result_json_path"],
             "summary": summary,
         }

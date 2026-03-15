@@ -15,3 +15,9 @@ Current commands:
 - `evcode-bench`
 - `evcode-bench assemble`
 - `evcode-bench run --task "..."`
+
+Execution bridge notes:
+
+- `evcode-bench run` now executes a benchmark bridge instead of only writing static execute receipts
+- use `--result-json PATH` to force the benchmark result artifact location
+- use `EVCODE_BENCHMARK_EXECUTOR` to inject a harness-compatible thin execution backend

@@ -12,12 +12,12 @@ EvCode is:
 
 The authoritative reset document is:
 
-- [docs/plans/2026-03-14-evcode-reset-native-fork.md](/home/lqf/table/table3/docs/plans/2026-03-14-evcode-reset-native-fork.md)
-- [docs/architecture/evcode-host-runtime-bridge.md](/home/lqf/table/table3/docs/architecture/evcode-host-runtime-bridge.md)
-- [docs/architecture/evcode-dual-distribution.md](/home/lqf/table/table3/docs/architecture/evcode-dual-distribution.md)
-- [docs/architecture/evcode-benchmark-adapter.md](/home/lqf/table/table3/docs/architecture/evcode-benchmark-adapter.md)
-- [docs/architecture/evcode-upstream-materialization-and-bridge.md](/home/lqf/table/table3/docs/architecture/evcode-upstream-materialization-and-bridge.md)
-- [docs/architecture/evcode-distribution-assembly.md](/home/lqf/table/table3/docs/architecture/evcode-distribution-assembly.md)
+- [plans/2026-03-14-evcode-reset-native-fork.md](plans/2026-03-14-evcode-reset-native-fork.md)
+- [architecture/evcode-host-runtime-bridge.md](architecture/evcode-host-runtime-bridge.md)
+- [architecture/evcode-dual-distribution.md](architecture/evcode-dual-distribution.md)
+- [architecture/evcode-benchmark-adapter.md](architecture/evcode-benchmark-adapter.md)
+- [architecture/evcode-upstream-materialization-and-bridge.md](architecture/evcode-upstream-materialization-and-bridge.md)
+- [architecture/evcode-distribution-assembly.md](architecture/evcode-distribution-assembly.md)
 
 ## Core Principle
 
@@ -80,10 +80,10 @@ The active bridge and distribution design now assumes:
 
 See:
 
-- [docs/architecture/evcode-host-runtime-bridge.md](/home/lqf/table/table3/docs/architecture/evcode-host-runtime-bridge.md)
-- [docs/architecture/evcode-dual-distribution.md](/home/lqf/table/table3/docs/architecture/evcode-dual-distribution.md)
-- [docs/architecture/evcode-benchmark-adapter.md](/home/lqf/table/table3/docs/architecture/evcode-benchmark-adapter.md)
-- [docs/architecture/evcode-upstream-materialization-and-bridge.md](/home/lqf/table/table3/docs/architecture/evcode-upstream-materialization-and-bridge.md)
+- [architecture/evcode-host-runtime-bridge.md](architecture/evcode-host-runtime-bridge.md)
+- [architecture/evcode-dual-distribution.md](architecture/evcode-dual-distribution.md)
+- [architecture/evcode-benchmark-adapter.md](architecture/evcode-benchmark-adapter.md)
+- [architecture/evcode-upstream-materialization-and-bridge.md](architecture/evcode-upstream-materialization-and-bridge.md)
 
 ## What Is No Longer The Product Direction
 

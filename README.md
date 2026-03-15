@@ -42,22 +42,23 @@ scripts/install/build_benchmark_from_source.sh
 
 Install references:
 
-- [docs/install/build-from-source.md](/home/lqf/table/table3/docs/install/build-from-source.md)
-- [docs/install/benchmark-build.md](/home/lqf/table/table3/docs/install/benchmark-build.md)
-- [docs/install/system-deps.md](/home/lqf/table/table3/docs/install/system-deps.md)
+- [docs/install/build-from-source.md](docs/install/build-from-source.md)
+- [docs/install/benchmark-build.md](docs/install/benchmark-build.md)
+- [docs/install/system-deps.md](docs/install/system-deps.md)
+- [docs/benchmark/submission-runbook.md](docs/benchmark/submission-runbook.md)
 
 ## Product Baseline
 
 The current authoritative architecture is defined in:
 
-- [docs/architecture.md](/home/lqf/table/table3/docs/architecture.md)
-- [docs/plans/2026-03-14-evcode-reset-native-fork.md](/home/lqf/table/table3/docs/plans/2026-03-14-evcode-reset-native-fork.md)
-- [docs/architecture/evcode-host-runtime-bridge.md](/home/lqf/table/table3/docs/architecture/evcode-host-runtime-bridge.md)
-- [docs/architecture/evcode-dual-distribution.md](/home/lqf/table/table3/docs/architecture/evcode-dual-distribution.md)
-- [docs/architecture/evcode-benchmark-adapter.md](/home/lqf/table/table3/docs/architecture/evcode-benchmark-adapter.md)
-- [docs/architecture/evcode-upstream-materialization-and-bridge.md](/home/lqf/table/table3/docs/architecture/evcode-upstream-materialization-and-bridge.md)
-- [docs/plans/2026-03-15-evcode-vco-benchmark-integration-plan.md](/home/lqf/table/table3/docs/plans/2026-03-15-evcode-vco-benchmark-integration-plan.md)
-- [docs/plans/2026-03-15-evcode-upstream-materialization-and-bridge-plan.md](/home/lqf/table/table3/docs/plans/2026-03-15-evcode-upstream-materialization-and-bridge-plan.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/plans/2026-03-14-evcode-reset-native-fork.md](docs/plans/2026-03-14-evcode-reset-native-fork.md)
+- [docs/architecture/evcode-host-runtime-bridge.md](docs/architecture/evcode-host-runtime-bridge.md)
+- [docs/architecture/evcode-dual-distribution.md](docs/architecture/evcode-dual-distribution.md)
+- [docs/architecture/evcode-benchmark-adapter.md](docs/architecture/evcode-benchmark-adapter.md)
+- [docs/architecture/evcode-upstream-materialization-and-bridge.md](docs/architecture/evcode-upstream-materialization-and-bridge.md)
+- [docs/plans/2026-03-15-evcode-vco-benchmark-integration-plan.md](docs/plans/2026-03-15-evcode-vco-benchmark-integration-plan.md)
+- [docs/plans/2026-03-15-evcode-upstream-materialization-and-bridge-plan.md](docs/plans/2026-03-15-evcode-upstream-materialization-and-bridge-plan.md)
 
 ## Target Behaviors
 
@@ -108,6 +109,7 @@ Benchmark channel:
 ```bash
 node apps/evcode-bench/bin/evcode-bench.js
 node apps/evcode-bench/bin/evcode-bench.js assemble
+node apps/evcode-bench/bin/evcode-bench.js run --task "..." --result-json ./result.json
 ```
 
 Release packages:

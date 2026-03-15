@@ -34,9 +34,11 @@ function run(root) {
   const workspaceIndex = args.indexOf("--workspace");
   const artifactsRootIndex = args.indexOf("--artifacts-root");
   const runIdIndex = args.indexOf("--run-id");
+  const resultJsonIndex = args.indexOf("--result-json");
   const workspace = workspaceIndex >= 0 ? args[workspaceIndex + 1] : root;
   const artifactsRoot = artifactsRootIndex >= 0 ? args[artifactsRootIndex + 1] : root;
   const runId = runIdIndex >= 0 ? args[runIdIndex + 1] : "";
+  const resultJson = resultJsonIndex >= 0 ? args[resultJsonIndex + 1] : "";
   const result = spawnSync(
     "python3",
     [
@@ -56,6 +58,7 @@ function run(root) {
       "--artifacts-root",
       artifactsRoot,
       ...(runId ? ["--run-id", runId] : []),
+      ...(resultJson ? ["--result-json", resultJson] : []),
     ],
     { encoding: "utf8" }
   );

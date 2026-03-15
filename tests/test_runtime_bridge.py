@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -51,6 +52,24 @@ class RuntimeBridgeTests(unittest.TestCase):
 
     def test_benchmark_run_writes_governed_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
+            temp_root = Path(tempdir)
+            executor_script = temp_root / "fake_executor.py"
+            executor_script.write_text(
+                """from __future__ import annotations
+import argparse
+import json
+from pathlib import Path
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--task-file", required=True)
+parser.add_argument("--result-json", required=True)
+parser.add_argument("--workspace", required=True)
+parser.add_argument("--run-dir", required=True)
+args = parser.parse_args()
+Path(args.result_json).write_text(json.dumps({"status": "completed", "executor": "runtime-bridge-fake"}, indent=2), encoding="utf-8")
+""",
+                encoding="utf-8",
+            )
             completed = subprocess.run(
                 [
                     "node",
@@ -67,12 +86,17 @@ class RuntimeBridgeTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 check=True,
+                env={
+                    **os.environ,
+                    "EVCODE_BENCHMARK_EXECUTOR": f"python3 {executor_script} --task-file {{task_file}} --result-json {{result_json}} --workspace {{workspace}} --run-dir {{run_dir}}",
+                },
             )
             payload = json.loads(completed.stdout)
             self.assertEqual("benchmark_autonomous", payload["mode"])
             self.assertEqual("benchmark", payload["channel"])
             requirement_doc = Path(payload["artifacts"]["requirement_doc"])
             self.assertIn("Assumptions", requirement_doc.read_text(encoding="utf-8"))
+            self.assertTrue(Path(payload["artifacts"]["benchmark_result"]).exists())
 
 
 if __name__ == "__main__":

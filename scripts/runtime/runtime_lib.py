@@ -3,11 +3,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from execute_benchmark_task import BenchmarkExecutionConfig, execute_benchmark_task
 
 
 FIXED_STAGE_ORDER = [
@@ -30,6 +33,7 @@ class GovernedRuntimeConfig:
     run_id: str
     channel: str
     profile: str
+    result_json_path: Path | None = None
 
 
 def utc_now() -> str:
@@ -241,17 +245,47 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
         },
     )
 
-    execute_receipt_path = write_json(
-        session_root / "phase-execute.json",
-        {
-            "run_id": config.run_id,
-            "mode": config.mode,
-            "stage_order": FIXED_STAGE_ORDER,
-            "internal_grade": intent["internal_grade"],
-            "subagent_suffix_required": True,
-            "generated_at": utc_now(),
-        },
-    )
+    provider_policy_snapshot_path = None
+    if config.channel == "benchmark":
+        policy_source = config.repo_root / "config" / "provider-policy.benchmark.json"
+        provider_policy_snapshot_path = session_root / "provider-policy-snapshot.json"
+        shutil.copy2(policy_source, provider_policy_snapshot_path)
+
+    execute_artifacts: dict[str, Any] = {
+        "execute_receipt_path": None,
+        "result_json_path": None,
+        "stdout_path": None,
+        "stderr_path": None,
+        "status": "receipt_only",
+        "exit_code": None,
+    }
+    if config.channel == "benchmark":
+        execute_artifacts = execute_benchmark_task(
+            BenchmarkExecutionConfig(
+                task=config.task,
+                workspace=config.workspace,
+                repo_root=config.repo_root,
+                session_root=session_root,
+                run_id=config.run_id,
+                channel=config.channel,
+                profile=config.profile,
+                mode=config.mode,
+                result_json_path=config.result_json_path,
+            )
+        )
+        execute_receipt_path = Path(execute_artifacts["execute_receipt_path"])
+    else:
+        execute_receipt_path = write_json(
+            session_root / "phase-execute.json",
+            {
+                "run_id": config.run_id,
+                "mode": config.mode,
+                "stage_order": FIXED_STAGE_ORDER,
+                "internal_grade": intent["internal_grade"],
+                "subagent_suffix_required": True,
+                "generated_at": utc_now(),
+            },
+        )
 
     cleanup_receipt_path = write_json(
         session_root / "cleanup-receipt.json",
@@ -280,6 +314,10 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
             "execution_plan": str(execution_plan_path),
             "execution_plan_receipt": str(execution_plan_receipt_path),
             "execute_receipt": str(execute_receipt_path),
+            "benchmark_result": execute_artifacts["result_json_path"],
+            "benchmark_stdout": execute_artifacts["stdout_path"],
+            "benchmark_stderr": execute_artifacts["stderr_path"],
+            "provider_policy_snapshot": str(provider_policy_snapshot_path) if provider_policy_snapshot_path else None,
             "cleanup_receipt": str(cleanup_receipt_path),
         },
     }

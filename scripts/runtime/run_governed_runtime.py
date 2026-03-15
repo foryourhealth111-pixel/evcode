@@ -17,12 +17,14 @@ def main() -> int:
     parser.add_argument("--workspace", default="", help="Workspace path override")
     parser.add_argument("--artifacts-root", default="", help="Artifact root override")
     parser.add_argument("--run-id", default="", help="Optional run id")
+    parser.add_argument("--result-json", default="", help="Optional benchmark result.json path")
     args = parser.parse_args()
 
     repo_root = Path(args.repo_root).resolve()
     workspace = Path(args.workspace).resolve() if args.workspace else repo_root
     artifacts_root = Path(args.artifacts_root).resolve() if args.artifacts_root else repo_root
     run_id = args.run_id or new_run_id("governed")
+    result_json_path = Path(args.result_json).resolve() if args.result_json else None
 
     summary = write_runtime_session(
         GovernedRuntimeConfig(
@@ -34,6 +36,7 @@ def main() -> int:
             run_id=run_id,
             channel=args.channel,
             profile=args.profile,
+            result_json_path=result_json_path,
         )
     )
     print(json.dumps(summary, indent=2))
