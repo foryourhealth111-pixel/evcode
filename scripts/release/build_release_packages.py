@@ -32,15 +32,21 @@ def package_dir(source_dir: Path, archive_path: Path) -> None:
         tar.add(source_dir, arcname=source_dir.name)
 
 
-def build_release(repo_root: Path, output_root: Path, require_patched_host: bool) -> dict:
-    package_json = json.loads((repo_root / "package.json").read_text(encoding="utf-8"))
-    version = package_json["version"]
-    release_root = output_root / f"evcode-v{version}"
-    dist_root = release_root / "assembled"
-    artifacts_root = release_root / "artifacts"
-
-    remove_path(release_root)
-    artifacts_root.mkdir(parents=True, exist_ok=True)
+def resolve_bundled_host_binary(repo_root: Path, artifacts_root: Path, bundled_host_binary_override: Path | None) -> tuple[Path | None, dict]:
+    if bundled_host_binary_override is not None:
+        source = bundled_host_binary_override.resolve()
+        if not source.exists():
+            raise RuntimeError(f"bundled host binary override does not exist: {source}")
+        target = artifacts_root / "host" / "codex"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        target.chmod(target.stat().st_mode | 0o111)
+        return target, {
+            "attempted": False,
+            "succeeded": True,
+            "binary": str(target),
+            "reason": "override",
+        }
 
     cargo_path = shutil.which("cargo")
     bundled_host_binary = None
@@ -50,7 +56,6 @@ def build_release(repo_root: Path, output_root: Path, require_patched_host: bool
         "binary": None,
         "reason": None,
     }
-
     if cargo_path:
         bundled_host_binary = artifacts_root / "host" / "codex"
         host_build = run(
@@ -69,6 +74,29 @@ def build_release(repo_root: Path, output_root: Path, require_patched_host: bool
         host_build_status["binary"] = str(built_path) if built_path.exists() else None
     else:
         host_build_status["reason"] = "cargo-not-found"
+    return bundled_host_binary, host_build_status
+
+
+def build_release(
+    repo_root: Path,
+    output_root: Path,
+    require_patched_host: bool,
+    bundled_host_binary_override: Path | None = None,
+) -> dict:
+    package_json = json.loads((repo_root / "package.json").read_text(encoding="utf-8"))
+    version = package_json["version"]
+    release_root = output_root / f"evcode-v{version}"
+    dist_root = release_root / "assembled"
+    artifacts_root = release_root / "artifacts"
+
+    remove_path(release_root)
+    artifacts_root.mkdir(parents=True, exist_ok=True)
+
+    bundled_host_binary, host_build_status = resolve_bundled_host_binary(
+        repo_root,
+        artifacts_root,
+        bundled_host_binary_override,
+    )
 
     if require_patched_host and not host_build_status["succeeded"]:
         raise RuntimeError("patched host build was required but cargo/patched host build is unavailable")
@@ -82,6 +110,8 @@ def build_release(repo_root: Path, output_root: Path, require_patched_host: bool
             channel,
             "--output-root",
             str(dist_root),
+            "--link-mode",
+            "copy",
         ]
         if bundled_host_binary and bundled_host_binary.exists():
             assemble_cmd.extend(["--bundled-host-binary", str(bundled_host_binary)])
@@ -97,6 +127,7 @@ def build_release(repo_root: Path, output_root: Path, require_patched_host: bool
                 "dist_root": str(channel_dist_root),
                 "archive": str(archive_path),
                 "bundled_host_binary": manifest.get("bundled_host_binary"),
+                "self_contained": bool(manifest.get("bundled_host_binary")),
             }
         )
 
@@ -105,6 +136,7 @@ def build_release(repo_root: Path, output_root: Path, require_patched_host: bool
         "version": version,
         "built_at": utc_now(),
         "release_root": str(release_root),
+        "self_contained_release": all(bool(item["self_contained"]) for item in archives),
         "host_build": host_build_status,
         "archives": archives,
     }
@@ -118,14 +150,24 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Build EvCode release packages for standard and benchmark channels.")
     parser.add_argument("--output-root", default="dist/releases", help="Release output root")
     parser.add_argument(
-        "--require-patched-host",
+        "--allow-system-host",
         action="store_true",
-        help="Fail if the patched host binary cannot be built and bundled",
+        help="Allow development-only release packages that fall back to system codex when no bundled host is available",
+    )
+    parser.add_argument(
+        "--bundled-host-binary",
+        default="",
+        help="Use an existing host binary instead of building one with cargo",
     )
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
-    manifest = build_release(repo_root, Path(args.output_root).resolve(), args.require_patched_host)
+    manifest = build_release(
+        repo_root,
+        Path(args.output_root).resolve(),
+        require_patched_host=not args.allow_system_host,
+        bundled_host_binary_override=Path(args.bundled_host_binary) if args.bundled_host_binary else None,
+    )
     print(json.dumps(manifest, indent=2))
     return 0
 

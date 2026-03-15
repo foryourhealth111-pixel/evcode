@@ -76,7 +76,7 @@ Release packages:
 
 ```bash
 python3 scripts/release/build_release_packages.py
-python3 scripts/release/build_release_packages.py --require-patched-host
+python3 scripts/release/build_release_packages.py --allow-system-host
 ```
 
 What these commands now do:
@@ -86,6 +86,11 @@ What these commands now do:
 - prefer an EvCode-bundled patched host binary when present, otherwise fall back to the configured/system `codex`
 - keep standard and benchmark channels on the same governed runtime truth
 - emit releasable `standard` and `benchmark` tarballs through the release builder
+
+Formal release note:
+
+- official release packages are expected to be self-contained and should be built without `--allow-system-host`
+- `--allow-system-host` exists only for local development when Rust/cargo is unavailable
 
 Hard-equivalence note:
 

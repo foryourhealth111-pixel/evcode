@@ -36,7 +36,12 @@ jobs:
 
       - name: Build Release Packages
         run: |
-          python3 scripts/release/build_release_packages.py --require-patched-host
+          python3 scripts/release/build_release_packages.py
+
+      - name: Verify Release Packages
+        run: |
+          VERSION=$(python3 scripts/release/print_version.py)
+          python3 scripts/verify/check_release_packages.py --manifest dist/releases/evcode-v$VERSION/artifacts/release-manifest.json
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
