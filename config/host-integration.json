@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "host": "stellarlinkco/codex",
+  "hook_mapping": {
+    "user_prompt_submit": [
+      "skeleton_check",
+      "deep_interview",
+      "requirement_doc",
+      "xl_plan",
+      "plan_execute"
+    ],
+    "subagent_start": [
+      "plan_execute"
+    ],
+    "task_completed": [
+      "plan_execute"
+    ],
+    "stop": [
+      "phase_cleanup"
+    ]
+  },
+  "user_turn_policy": {
+    "must_append_vibe_suffix": true,
+    "suffix": " $vibe"
+  },
+  "subagent_policy": {
+    "must_append_vibe_suffix": true,
+    "suffix": " $vibe"
+  },
+  "physical_suffix_enforcement": {
+    "strategy": "host_patch_required",
+    "scope": [
+      "user_turn",
+      "subagent"
+    ],
+    "reason": "Materialized stellarlinkco/codex only injects UserPromptSubmit/SubagentStart context and cannot rewrite the submitted turn or child initial prompt without a host patch.",
+    "patch_file": "vendor/codex-host/patches/subagent-vibe-suffix.patch",
+    "verification_script": "scripts/verify/check_host_bridge.py"
+  }
+}

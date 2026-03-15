@@ -1,0 +1,15 @@
+dist/
+.evcode-dist/
+.evcode-build/
+.claude-flow/
+.evcode-home/
+.serena/
+node_modules/
+.vitest/
+coverage/
+*.log
+__pycache__/
+.pytest_cache/
+.venv/
+outputs/
+tmp/

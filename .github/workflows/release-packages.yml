@@ -1,0 +1,45 @@
+name: release-packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify
+        run: |
+          python3 scripts/verify/check_contracts.py
+          python3 scripts/verify/check_proof_docs.py
+          python3 scripts/verify/check_distribution_assembly.py
+          python3 scripts/verify/check_host_bridge.py
+          python3 -m unittest discover -s tests -p 'test_*.py'
+
+      - name: Build Release Packages
+        run: |
+          python3 scripts/release/build_release_packages.py --require-patched-host
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evcode-release-packages
+          path: dist/releases/**

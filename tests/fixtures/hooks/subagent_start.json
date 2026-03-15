@@ -1,0 +1,9 @@
+{
+  "session_id": "fixture-session",
+  "transcript_path": "/tmp/fixture/transcript.jsonl",
+  "cwd": "/workspace/project",
+  "permission_mode": "on-request",
+  "hook_event_name": "SubagentStart",
+  "agent_id": "agent-01",
+  "agent_type": "researcher"
+}

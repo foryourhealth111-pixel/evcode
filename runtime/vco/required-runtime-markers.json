@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "markers": [
+    "protocols/runtime.md",
+    "config/runtime-contract.json",
+    "config/runtime-modes.json",
+    "scripts/runtime/invoke-vibe-runtime.ps1",
+    "scripts/runtime/VibeRuntime.Common.ps1",
+    "scripts/verify/vibe-governed-runtime-contract-gate.ps1",
+    "docs/releases/v2.3.43.md",
+    "docs/requirements/README.md"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "profile": "benchmark",
+  "default_mode": "benchmark_autonomous",
+  "provider_policy": "config/provider-policy.benchmark.json"
+}

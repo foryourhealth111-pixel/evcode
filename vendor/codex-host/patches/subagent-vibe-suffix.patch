@@ -1,0 +1,127 @@
+diff --git a/codex-rs/core/src/codex.rs b/codex-rs/core/src/codex.rs
+index d9c0e72..9018d73 100644
+--- a/codex-rs/core/src/codex.rs
++++ b/codex-rs/core/src/codex.rs
+@@ -204,6 +204,28 @@ pub enum SteerInputError {
+     EmptyInput,
+ }
+ 
++fn append_vibe_suffix_to_input_items(items: &mut Vec<UserInput>) {
++    for item in items.iter_mut() {
++        let UserInput::Text { text, .. } = item else {
++            continue;
++        };
++        let trimmed = text.trim_end();
++        if trimmed.ends_with("$vibe") {
++            return;
++        }
++        if trimmed.is_empty() {
++            *text = "$vibe".to_string();
++        } else {
++            *text = format!("{trimmed} $vibe");
++        }
++        return;
++    }
++    items.push(UserInput::Text {
++        text: "$vibe".to_string(),
++        text_elements: Vec::new(),
++    });
++}
++
+ /// Notes from the previous real user turn.
+ ///
+ /// Conceptually this is the same role that `previous_model` used to fill, but
+@@ -4819,7 +4841,7 @@ mod handlers {
+     }
+ 
+     pub async fn user_input_or_turn(sess: &Arc<Session>, sub_id: String, op: Op) {
+-        let (items, updates) = match op {
++        let (mut items, updates) = match op {
+             Op::UserTurn {
+                 cwd,
+                 approval_policy,
+@@ -4878,6 +4900,7 @@ mod handlers {
+         };
+         sess.maybe_emit_unknown_model_warning_for_turn(current_context.as_ref())
+             .await;
++        append_vibe_suffix_to_input_items(&mut items);
+         if let Some(reason) = sess
+             .dispatch_user_prompt_submit_hook(current_context.as_ref(), &items)
+             .await
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs b/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
+index 9237913..3e1e042 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/spawn.rs
+@@ -47,7 +47,7 @@ pub async fn handle(
+     let model = optional_non_empty(&args.model, "model")?;
+     let use_worktree = args.worktree;
+     let background = args.background;
+-    let input_items = parse_collab_input(args.message, args.items)?;
++    let mut input_items = parse_collab_input(args.message, args.items)?;
+     let prompt = input_preview(&input_items);
+     let session_source = turn.session_source.clone();
+     let child_depth = next_thread_spawn_depth(&session_source);
+@@ -190,6 +190,8 @@ pub async fn handle(
+         }
+     }
+ 
++    append_vibe_suffix_to_input_items(&mut input_items);
++
+     if let Err(err) = session
+         .services
+         .agent_control
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents/spawn_team.rs b/codex-rs/core/src/tools/handlers/multi_agents/spawn_team.rs
+index 46028c7..128a7d0 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents/spawn_team.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents/spawn_team.rs
+@@ -159,7 +159,7 @@ pub async fn handle(
+             None
+         };
+ 
+-        let input_items = vec![UserInput::Text {
++        let mut input_items = vec![UserInput::Text {
+             text: member.task.trim().to_string(),
+             text_elements: Vec::new(),
+         }];
+@@ -242,6 +242,8 @@ pub async fn handle(
+             }
+         }
+ 
++        append_vibe_suffix_to_input_items(&mut input_items);
++
+         if let Err(err) = session
+             .services
+             .agent_control
+diff --git a/codex-rs/core/src/tools/handlers/multi_agents.rs b/codex-rs/core/src/tools/handlers/multi_agents.rs
+index 25564b5..560d07f 100644
+--- a/codex-rs/core/src/tools/handlers/multi_agents.rs
++++ b/codex-rs/core/src/tools/handlers/multi_agents.rs
+@@ -1118,6 +1118,28 @@ async fn dispatch_subagent_start_hook(
+     additional_context
+ }
+ 
++fn append_vibe_suffix_to_input_items(items: &mut Vec<UserInput>) {
++    for item in items.iter_mut() {
++        let UserInput::Text { text, .. } = item else {
++            continue;
++        };
++        let trimmed = text.trim_end();
++        if trimmed.ends_with("$vibe") {
++            return;
++        }
++        if trimmed.is_empty() {
++            *text = "$vibe".to_string();
++        } else {
++            *text = format!("{trimmed} $vibe");
++        }
++        return;
++    }
++    items.push(UserInput::Text {
++        text: "$vibe".to_string(),
++        text_elements: Vec::new(),
++    });
++}
++
+ async fn dispatch_teammate_idle_hook(
+     session: &Session,
+     turn: &TurnContext,

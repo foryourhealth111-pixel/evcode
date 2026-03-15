@@ -1,0 +1,18 @@
+profile = "standard"
+
+[projects."/workspace"]
+trust_level = "trusted"
+
+[hooks]
+
+[[hooks.user_prompt_submit]]
+command = ["python3", "scripts/hooks/user_prompt_submit.py"]
+
+[[hooks.subagent_start]]
+command = ["python3", "scripts/hooks/subagent_start.py"]
+
+[[hooks.task_completed]]
+command = ["python3", "scripts/hooks/task_completed.py"]
+
+[[hooks.stop]]
+command = ["python3", "scripts/hooks/stop.py"]

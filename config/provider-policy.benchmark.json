@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "profile": "benchmark",
+  "allowed_provider_families": [
+    "embedded",
+    "api"
+  ],
+  "requires_external_mcp_for_core_closure": false,
+  "allow_interactive_questions": false,
+  "allow_live_plan_pauses": false
+}

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "skill": "vibe",
+  "runtime_family": "governed-runtime-first",
+  "updated_at": "2026-03-15",
+  "host_syntax_aliases": [
+    "/vibe",
+    "$vibe",
+    "vibe"
+  ],
+  "modes": [
+    "interactive_governed",
+    "benchmark_autonomous"
+  ],
+  "stage_order": [
+    "skeleton_check",
+    "deep_interview",
+    "requirement_doc",
+    "xl_plan",
+    "plan_execute",
+    "phase_cleanup"
+  ],
+  "artifacts": {
+    "session_root": "outputs/runtime/vibe-sessions/{run_id}",
+    "requirement_dir": "docs/requirements",
+    "plan_dir": "docs/plans"
+  }
+}

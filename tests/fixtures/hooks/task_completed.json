@@ -1,0 +1,12 @@
+{
+  "session_id": "fixture-session",
+  "transcript_path": "/tmp/fixture/transcript.jsonl",
+  "cwd": "/workspace/project",
+  "permission_mode": "on-request",
+  "hook_event_name": "TaskCompleted",
+  "task_id": "task-01",
+  "task_subject": "governed-task",
+  "task_description": "Complete benchmark closure",
+  "teammate_name": "agent-01",
+  "team_name": "evcode-xl"
+}

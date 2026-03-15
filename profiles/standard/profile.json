@@ -1,0 +1,5 @@
+{
+  "profile": "standard",
+  "default_mode": "interactive_governed",
+  "provider_policy": "config/provider-policy.standard.json"
+}

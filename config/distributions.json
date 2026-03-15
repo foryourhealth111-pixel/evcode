@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "channels": {
+    "standard": {
+      "app_dir": "apps/evcode",
+      "profile": "standard",
+      "binary": "evcode",
+      "default_mode": "interactive_governed",
+      "benchmark_adapter": false
+    },
+    "benchmark": {
+      "app_dir": "apps/evcode-bench",
+      "profile": "benchmark",
+      "binary": "evcode-bench",
+      "default_mode": "benchmark_autonomous",
+      "benchmark_adapter": true
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "@evcode/app-bench",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "evcode-bench": "bin/evcode-bench.js"
+  }
+}

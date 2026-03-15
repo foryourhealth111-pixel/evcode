@@ -1,0 +1,19 @@
+{
+  "materialized_at": "2026-03-15T02:48:23Z",
+  "source": "foryourhealth111-pixel/vco-skills-codex",
+  "remote": "https://github.com/foryourhealth111-pixel/vco-skills-codex",
+  "branch": "main",
+  "commit": "78856fb17288fda657f41e4279c8a66f350de1e1",
+  "target_dir": "/home/lqf/table/table3/runtime/vco",
+  "materialized_subdir": "upstream",
+  "sparse_paths": [
+    "README.md",
+    "protocols",
+    "config",
+    "scripts/runtime",
+    "scripts/verify",
+    "docs/releases",
+    "docs/requirements",
+    "bundled/skills/vibe"
+  ]
+}

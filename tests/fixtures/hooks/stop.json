@@ -1,0 +1,9 @@
+{
+  "session_id": "fixture-session",
+  "transcript_path": "/tmp/fixture/transcript.jsonl",
+  "cwd": "/workspace/project",
+  "permission_mode": "on-request",
+  "hook_event_name": "Stop",
+  "stop_hook_active": true,
+  "last_assistant_message": "Phase complete."
+}

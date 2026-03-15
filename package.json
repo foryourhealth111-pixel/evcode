@@ -1,0 +1,24 @@
+{
+  "name": "evcode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "EvCode monorepo skeleton for a Codex-native host with embedded VCO governed runtime.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "doctor": "node apps/evcode/bin/evcode.js doctor",
+    "status": "node apps/evcode/bin/evcode.js status --json",
+    "status:bench": "node apps/evcode-bench/bin/evcode-bench.js status --json",
+    "assemble": "node apps/evcode/bin/evcode.js assemble",
+    "assemble:bench": "node apps/evcode-bench/bin/evcode-bench.js assemble",
+    "build:host": "node apps/evcode/bin/evcode.js host-build --output .evcode-build/host/codex",
+    "release:packages": "python3 scripts/release/build_release_packages.py",
+    "check:contracts": "python3 scripts/verify/check_contracts.py",
+    "check:proof": "python3 scripts/verify/check_proof_docs.py",
+    "check:assembly": "python3 scripts/verify/check_distribution_assembly.py",
+    "test": "python3 -m unittest discover -s tests -p 'test_*.py'",
+    "check": "python3 scripts/verify/check_contracts.py && python3 scripts/verify/check_proof_docs.py && python3 scripts/verify/check_distribution_assembly.py && python3 -m unittest discover -s tests -p 'test_*.py'"
+  }
+}

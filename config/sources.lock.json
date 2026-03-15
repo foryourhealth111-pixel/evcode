@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "host": {
+    "id": "stellarlinkco/codex",
+    "remote": "https://github.com/stellarlinkco/codex",
+    "branch": "main",
+    "commit": "82a925f8d366754ecddad8bba56f2bf74de3f2c0",
+    "vendored_dir": "vendor/codex-host",
+    "materialized_subdir": "upstream",
+    "integration_strategy": "hook-rich-host"
+  },
+  "runtime": {
+    "id": "foryourhealth111-pixel/vco-skills-codex",
+    "remote": "https://github.com/foryourhealth111-pixel/vco-skills-codex",
+    "version": "2.3.43",
+    "commit": "78856fb17288fda657f41e4279c8a66f350de1e1",
+    "mirrored_dir": "runtime/vco",
+    "materialized_subdir": "upstream",
+    "integration_strategy": "embedded-governed-runtime"
+  }
+}

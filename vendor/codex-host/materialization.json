@@ -1,0 +1,17 @@
+{
+  "materialized_at": "2026-03-15T02:48:13Z",
+  "source": "stellarlinkco/codex",
+  "remote": "https://github.com/stellarlinkco/codex",
+  "branch": "main",
+  "commit": "82a925f8d366754ecddad8bba56f2bf74de3f2c0",
+  "target_dir": "/home/lqf/table/table3/vendor/codex-host",
+  "materialized_subdir": "upstream",
+  "sparse_paths": [
+    "README.md",
+    "docs",
+    "scripts",
+    "LICENSE",
+    "Cargo.toml",
+    "codex-rs"
+  ]
+}

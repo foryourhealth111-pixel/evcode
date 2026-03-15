@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-15",
+  "product": "evcode",
+  "host_baseline": "stellarlinkco/codex",
+  "embedded_runtime_version": "2.3.43",
+  "entry_skill": "vibe",
+  "allowed_modes": [
+    "interactive_governed",
+    "benchmark_autonomous"
+  ],
+  "stage_order": [
+    "skeleton_check",
+    "deep_interview",
+    "requirement_doc",
+    "xl_plan",
+    "plan_execute",
+    "phase_cleanup"
+  ],
+  "artifacts": {
+    "session_root": "outputs/runtime/vibe-sessions/{run_id}",
+    "skeleton_receipt": "outputs/runtime/vibe-sessions/{run_id}/skeleton-receipt.json",
+    "intent_contract": "outputs/runtime/vibe-sessions/{run_id}/intent-contract.json",
+    "requirement_doc": "docs/requirements/{date}-{slug}.md",
+    "execution_plan": "docs/plans/{date}-{slug}-execution-plan.md",
+    "execute_receipt": "outputs/runtime/vibe-sessions/{run_id}/phase-execute.json",
+    "cleanup_receipt": "outputs/runtime/vibe-sessions/{run_id}/cleanup-receipt.json"
+  }
+}

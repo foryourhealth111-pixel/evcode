@@ -1,0 +1,8 @@
+{
+  "session_id": "fixture-session",
+  "transcript_path": "/tmp/fixture/transcript.jsonl",
+  "cwd": "/workspace/project",
+  "permission_mode": "on-request",
+  "hook_event_name": "UserPromptSubmit",
+  "prompt": "Implement a benchmark-safe governed run with explicit verification."
+}
