@@ -1,5 +1,6 @@
 {
   "profile": "benchmark",
   "default_mode": "benchmark_autonomous",
-  "provider_policy": "config/provider-policy.benchmark.json"
+  "provider_policy": "config/provider-policy.benchmark.json",
+  "default_submission_preset": "config/submission-presets/rightcode-gpt-5.4-xhigh.json"
 }

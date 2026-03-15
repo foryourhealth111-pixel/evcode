@@ -47,6 +47,9 @@ class BenchmarkProviderSettings:
     reasoning_effort: str
     provider_block: str | None
     source_codex_home: Path
+    submission_preset_name: str | None = None
+    submission_preset_path: Path | None = None
+    execution_target_source: str = "source_codex_home"
     auth_strategy: str | None = None
 
 
@@ -92,8 +95,24 @@ def load_provider_policy(repo_root: Path) -> dict[str, Any]:
     return json.loads(policy_path.read_text(encoding="utf-8"))
 
 
+def load_profile_metadata(repo_root: Path, profile: str) -> dict[str, Any]:
+    profile_path = repo_root / "profiles" / profile / "profile.json"
+    if not profile_path.exists():
+        return {}
+    return json.loads(profile_path.read_text(encoding="utf-8"))
+
+
 def read_text_if_exists(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def resolve_repo_relative_path(repo_root: Path, raw_path: str | None) -> Path | None:
+    if not raw_path:
+        return None
+    candidate = Path(raw_path).expanduser()
+    if not candidate.is_absolute():
+        candidate = (repo_root / candidate).resolve()
+    return candidate.resolve()
 
 
 def extract_toml_string(text: str, key: str) -> str | None:
@@ -120,37 +139,65 @@ def extract_provider_block(text: str, provider_name: str) -> str | None:
     return "\n".join(block_lines).strip() if block_lines else None
 
 
+def load_submission_preset(config: BenchmarkExecutionConfig) -> tuple[dict[str, Any], Path | None]:
+    env_preset = os.environ.get("EVCODE_SUBMISSION_PRESET")
+    profile_metadata = load_profile_metadata(config.repo_root, config.profile)
+    raw_path = env_preset or profile_metadata.get("default_submission_preset")
+    preset_path = resolve_repo_relative_path(config.repo_root, raw_path)
+    if not preset_path or not preset_path.exists():
+        return {}, preset_path
+    return json.loads(preset_path.read_text(encoding="utf-8")), preset_path
+
+
 def resolve_benchmark_provider_settings(config: BenchmarkExecutionConfig) -> BenchmarkProviderSettings:
     policy = load_provider_policy(config.repo_root)
+    submission_preset, submission_preset_path = load_submission_preset(config)
     source_codex_home = resolve_source_codex_home()
     source_config_text = read_text_if_exists(source_codex_home / "config.toml")
 
+    env_provider = os.environ.get("EVCODE_BENCHMARK_MODEL_PROVIDER")
+    env_model = os.environ.get("EVCODE_BENCHMARK_MODEL")
+    env_reasoning = os.environ.get("EVCODE_BENCHMARK_REASONING_EFFORT")
+
     model_provider = (
-        os.environ.get("EVCODE_BENCHMARK_MODEL_PROVIDER")
-        or policy.get("preferred_model_provider")
+        env_provider
+        or submission_preset.get("model_provider")
         or extract_toml_string(source_config_text, "model_provider")
         or "openai"
     )
     model = (
-        os.environ.get("EVCODE_BENCHMARK_MODEL")
-        or policy.get("preferred_model")
+        env_model
+        or submission_preset.get("model")
         or extract_toml_string(source_config_text, "model")
         or "gpt-5"
     )
     reasoning_effort = (
-        os.environ.get("EVCODE_BENCHMARK_REASONING_EFFORT")
-        or policy.get("preferred_reasoning_effort")
+        env_reasoning
+        or submission_preset.get("reasoning_effort")
         or extract_toml_string(source_config_text, "model_reasoning_effort")
         or "high"
     )
     provider_block = extract_provider_block(source_config_text, model_provider)
-    auth_strategy = str(policy.get("auth_strategy")) if policy.get("auth_strategy") else None
+    auth_strategy = str(submission_preset.get("auth_strategy")) if submission_preset.get("auth_strategy") else None
+    execution_target_source = "source_codex_home"
+    if env_provider or env_model or env_reasoning:
+        execution_target_source = "env"
+    elif submission_preset:
+        execution_target_source = "submission_preset"
+
+    if policy.get("require_explicit_execution_target") and execution_target_source == "source_codex_home":
+        raise RuntimeError(
+            "Benchmark mode requires an explicit execution target via EVCODE_SUBMISSION_PRESET or benchmark env overrides."
+        )
     return BenchmarkProviderSettings(
         model_provider=model_provider,
         model=model,
         reasoning_effort=reasoning_effort,
         provider_block=provider_block,
         source_codex_home=source_codex_home,
+        submission_preset_name=str(submission_preset.get("name")) if submission_preset.get("name") else None,
+        submission_preset_path=submission_preset_path,
+        execution_target_source=execution_target_source,
         auth_strategy=auth_strategy,
     )
 
@@ -363,6 +410,9 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "model_provider": provider_settings.model_provider,
         "model": provider_settings.model,
         "reasoning_effort": provider_settings.reasoning_effort,
+        "submission_preset_name": provider_settings.submission_preset_name,
+        "submission_preset_path": str(provider_settings.submission_preset_path) if provider_settings.submission_preset_path else None,
+        "execution_target_source": provider_settings.execution_target_source,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
         "generated_at": utc_now(),
@@ -385,6 +435,9 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "model_provider": provider_settings.model_provider,
         "model": provider_settings.model,
         "reasoning_effort": provider_settings.reasoning_effort,
+        "submission_preset_name": provider_settings.submission_preset_name,
+        "submission_preset_path": str(provider_settings.submission_preset_path) if provider_settings.submission_preset_path else None,
+        "execution_target_source": provider_settings.execution_target_source,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
         "result_json_path": str(result_json_path),

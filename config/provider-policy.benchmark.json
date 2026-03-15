@@ -2,14 +2,17 @@
   "version": 1,
   "updated_at": "2026-03-15",
   "profile": "benchmark",
-  "preferred_model_provider": "rightcode",
-  "preferred_model": "gpt-5.4",
-  "preferred_reasoning_effort": "xhigh",
-  "auth_strategy": "copy-openai-auth",
-  "required_env_keys": ["OPENAI_API_KEY"],
   "allowed_provider_families": [
     "embedded",
     "api"
+  ],
+  "require_isolated_codex_home": true,
+  "require_external_artifacts": true,
+  "require_explicit_execution_target": true,
+  "execution_target_source_order": [
+    "env",
+    "submission_preset",
+    "source_codex_home"
   ],
   "requires_external_mcp_for_core_closure": false,
   "allow_interactive_questions": false,

@@ -10,8 +10,8 @@ Goals:
 - avoid creating a second orchestrator
 - keep benchmark artifacts outside the task workspace
 - isolate benchmark runs from host-global `CODEX_HOME` / MCP state
-- pin benchmark submission defaults to an explicit provider/model/reasoning tuple
-- copy source `auth.json` into the isolated benchmark `CODEX_HOME`
+- resolve submission presets separately from benchmark runtime policy
+- copy source `auth.json` into the isolated benchmark `CODEX_HOME` only when the active submission preset requests it
 
 Thin adapter entrypoints:
 

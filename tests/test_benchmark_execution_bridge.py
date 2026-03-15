@@ -20,6 +20,21 @@ class BenchmarkExecutionBridgeTests(unittest.TestCase):
             artifacts_root = temp_root / "artifacts"
             source_codex_home = temp_root / "source-codex-home"
             source_codex_home.mkdir()
+            submission_preset = temp_root / "submission-preset.json"
+            submission_preset.write_text(
+                json.dumps(
+                    {
+                        "version": 1,
+                        "name": "test-rightcode-preset",
+                        "model_provider": "rightcode",
+                        "model": "gpt-5.4",
+                        "reasoning_effort": "xhigh",
+                        "auth_strategy": "copy-openai-auth",
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
             (source_codex_home / "config.toml").write_text(
                 """
 model_provider = "rightcode"
@@ -76,6 +91,7 @@ sys.exit(0)
                 **os.environ,
                 "EVCODE_BENCH_HOST_BIN": str(fake_codex),
                 "EVCODE_BENCH_SOURCE_CODEX_HOME": str(source_codex_home),
+                "EVCODE_SUBMISSION_PRESET": str(submission_preset),
                 "FAKE_CODEX_ARGS_LOG": str(args_log),
             }
             completed = subprocess.run(
@@ -111,6 +127,9 @@ sys.exit(0)
             result_payload = json.loads(result_json_path.read_text(encoding="utf-8"))
             self.assertEqual("completed", result_payload["status"])
             self.assertTrue(Path(result_payload["codex_home"]).exists())
+            self.assertEqual("test-rightcode-preset", result_payload["submission_preset_name"])
+            self.assertEqual(str(submission_preset.resolve()), result_payload["submission_preset_path"])
+            self.assertEqual("submission_preset", result_payload["execution_target_source"])
             config_toml = Path(result_payload["codex_home"]) / "config.toml"
             config_text = config_toml.read_text(encoding="utf-8")
             self.assertIn("[mcp_servers]", config_text)

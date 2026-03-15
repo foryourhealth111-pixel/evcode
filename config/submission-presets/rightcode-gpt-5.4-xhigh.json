@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "name": "rightcode-gpt-5.4-xhigh",
+  "description": "Submission preset for RightCode Responses API with GPT-5.4 and xhigh reasoning.",
+  "model_provider": "rightcode",
+  "model": "gpt-5.4",
+  "reasoning_effort": "xhigh",
+  "auth_strategy": "copy-openai-auth"
+}

@@ -4,6 +4,9 @@
 
 This runbook defines the minimum repeatable path for assembling and smoke-testing the benchmark distribution without polluting the task workspace.
 
+Benchmark is a constrained runtime mode over the same EvCode agent core.
+It is not a second agent implementation.
+
 ## Core Rules
 
 - the benchmark path must use the same governed runtime core as the normal distribution
@@ -12,11 +15,8 @@ This runbook defines the minimum repeatable path for assembling and smoke-testin
 - the core benchmark closure must not require external MCP availability
 - benchmark artifacts must live outside the task workspace
 - each benchmark run materializes an isolated `CODEX_HOME` with `mcp_servers = {}`
-- each benchmark run pins the submission model route explicitly:
-  - provider: `rightcode`
-  - model: `gpt-5.4`
-  - reasoning effort: `xhigh`
-- each benchmark run copies `auth.json` from the source `CODEX_HOME` into the isolated benchmark `CODEX_HOME`
+- benchmark policy controls autonomy, isolation, and artifact boundaries
+- submission presets control provider, model, reasoning, and auth behavior
 
 ## Required Environment
 
@@ -35,6 +35,7 @@ Optional benchmark execution overrides:
 - `EVCODE_BENCHMARK_MODEL`: override submission model
 - `EVCODE_BENCHMARK_REASONING_EFFORT`: override submission reasoning effort
 - `EVCODE_BENCH_SOURCE_CODEX_HOME`: source `CODEX_HOME` used to copy config/auth into the isolated benchmark home
+- `EVCODE_SUBMISSION_PRESET`: explicit submission preset path; overrides the profile default preset
 
 Supported placeholders inside `EVCODE_BENCHMARK_EXECUTOR`:
 
@@ -80,7 +81,7 @@ Expected outputs:
 - Official mode:
   - use the default `codex exec` path
   - let EvCode create its per-run isolated `CODEX_HOME`
-  - let EvCode copy `config.toml` provider settings and `auth.json` from the source `CODEX_HOME`
+  - let the benchmark profile resolve a submission preset, then copy the needed provider block and auth material from the source `CODEX_HOME`
   - point `--artifacts-root` to a directory outside the task workspace
   - do not enable MCP or workstation-specific config
 - Debug mode:
@@ -108,6 +109,23 @@ Terminal-Bench installed-agent route:
 - it expects either:
   - `EVCODE_BENCH_ENTRYPOINT`, or
   - `EVCODE_REPO_ROOT`
+
+## Submission Presets
+
+The benchmark profile may point to a default submission preset.
+
+Current default:
+
+- `config/submission-presets/rightcode-gpt-5.4-xhigh.json`
+
+This preset currently resolves to:
+
+- provider: `rightcode`
+- model: `gpt-5.4`
+- reasoning effort: `xhigh`
+- auth strategy: copy `auth.json` from the source `CODEX_HOME`
+
+You can swap presets without changing the benchmark runtime itself.
 
 ## Proof Ladder
 

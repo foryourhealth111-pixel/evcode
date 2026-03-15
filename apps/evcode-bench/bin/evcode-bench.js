@@ -12,6 +12,7 @@ function status(root) {
   const distributions = loadJson(root, "config/distributions.json");
   const runtime = loadJson(root, "config/runtime-contract.json");
   const policy = loadJson(root, "config/provider-policy.benchmark.json");
+  const profile = loadJson(root, "profiles/benchmark/profile.json");
   return {
     product: "EvCode Bench",
     channel: "benchmark",
@@ -20,6 +21,7 @@ function status(root) {
     host: runtime.host_baseline,
     embedded_runtime_version: runtime.embedded_runtime_version,
     provider_families: policy.allowed_provider_families,
+    default_submission_preset: profile.default_submission_preset || null,
     assembled_distribution_exists: fs.existsSync(path.join(root, ".evcode-dist", "benchmark", "bin", "evcode-bench"))
   };
 }

@@ -36,6 +36,21 @@ PY
 
 
 class AppEntrypointTests(unittest.TestCase):
+    def test_benchmark_status_reports_default_submission_preset(self) -> None:
+        completed = subprocess.run(
+            ["node", str(REPO_ROOT / "apps" / "evcode-bench" / "bin" / "evcode-bench.js"), "status", "--json"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        payload = json.loads(completed.stdout)
+        self.assertEqual("benchmark", payload["channel"])
+        self.assertEqual(
+            "config/submission-presets/rightcode-gpt-5.4-xhigh.json",
+            payload["default_submission_preset"],
+        )
+
     def test_standard_entrypoint_passthrough_launches_native_host(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             stub = make_stub_host(tempdir)
