@@ -63,18 +63,18 @@ def format_toml_value(value: object) -> str:
     return json.dumps(value)
 
 
-def quote_table_part(part: str) -> str:
+def quote_toml_key(part: str) -> str:
     return part if re.match(r"^[A-Za-z0-9_-]+$", part) else json.dumps(part)
 
 
 def render_toml_table(parts: list[str], table: dict) -> list[str]:
-    lines = [f"[{'.'.join(quote_table_part(part) for part in parts)}]"]
+    lines = [f"[{'.'.join(quote_toml_key(part) for part in parts)}]"]
     nested_tables: list[tuple[list[str], dict]] = []
     for key, value in table.items():
         if isinstance(value, dict):
             nested_tables.append((parts + [key], value))
             continue
-        lines.append(f"{key} = {format_toml_value(value)}")
+        lines.append(f"{quote_toml_key(key)} = {format_toml_value(value)}")
     lines.append("")
     for nested_parts, nested_table in nested_tables:
         lines.extend(render_toml_table(nested_parts, nested_table))

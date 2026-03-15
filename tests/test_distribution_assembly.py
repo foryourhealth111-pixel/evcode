@@ -54,6 +54,10 @@ requires_openai_auth = true
 [mcp_servers.github]
 url = "https://api.githubcopilot.com/mcp/"
 bearer_token_env_var = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN"
+
+[notice.model_migrations]
+gpt-5 = "gpt-5.3-codex"
+"gpt-5.3-codex" = "gpt-5.4"
 """.strip()
                 + "\n",
                 encoding="utf-8",
@@ -90,6 +94,8 @@ bearer_token_env_var = "CODEX_GITHUB_PERSONAL_ACCESS_TOKEN"
             self.assertIn("[model_providers.rightcode]", config_toml)
             self.assertIn('base_url = "https://right.codes/codex/v1"', config_toml)
             self.assertIn("[mcp_servers.github]", config_toml)
+            self.assertIn('[notice.model_migrations]', config_toml)
+            self.assertIn('"gpt-5.3-codex" = "gpt-5.4"', config_toml)
             self.assertTrue((dist_root / "codex-home" / "auth.json").exists())
             self.assertTrue((dist_root / "codex-home" / "env.local").exists())
             self.assertEqual(str(source_codex_home.resolve()), manifest["source_codex_home"])
