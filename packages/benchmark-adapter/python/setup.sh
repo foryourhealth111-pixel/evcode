@@ -11,7 +11,18 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-cat >/usr/local/bin/evcode-bench <<'EOF'
+INSTALL_BIN_DIR="${EVCODE_INSTALL_BIN_DIR:-}"
+if [[ -z "$INSTALL_BIN_DIR" ]]; then
+  if [[ -d /usr/local/bin && -w /usr/local/bin ]]; then
+    INSTALL_BIN_DIR="/usr/local/bin"
+  else
+    INSTALL_BIN_DIR="$HOME/.local/bin"
+  fi
+fi
+
+mkdir -p "$INSTALL_BIN_DIR"
+
+cat >"$INSTALL_BIN_DIR/evcode-bench" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -27,5 +38,5 @@ echo "EvCode benchmark entrypoint is unavailable. Set EVCODE_BENCH_ENTRYPOINT or
 exit 1
 EOF
 
-chmod +x /usr/local/bin/evcode-bench
-echo "Installed evcode-bench wrapper at /usr/local/bin/evcode-bench"
+chmod +x "$INSTALL_BIN_DIR/evcode-bench"
+echo "Installed evcode-bench wrapper at $INSTALL_BIN_DIR/evcode-bench"

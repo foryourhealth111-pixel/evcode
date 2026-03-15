@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -39,6 +40,16 @@ class BenchmarkExecutionConfig:
     result_json_path: Path | None = None
 
 
+@dataclass(frozen=True)
+class BenchmarkProviderSettings:
+    model_provider: str
+    model: str
+    reasoning_effort: str
+    provider_block: str | None
+    source_codex_home: Path
+    auth_strategy: str | None = None
+
+
 def utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -67,16 +78,103 @@ def ensure_external_artifact_path(path: Path, workspace: Path, *, suffix: str, r
     return path
 
 
-def build_benchmark_codex_config(workspace: Path) -> str:
+def resolve_source_codex_home() -> Path:
+    configured = os.environ.get("EVCODE_BENCH_SOURCE_CODEX_HOME") or os.environ.get("CODEX_HOME")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return (Path.home() / ".codex").resolve()
+
+
+def load_provider_policy(repo_root: Path) -> dict[str, Any]:
+    policy_path = repo_root / "config" / "provider-policy.benchmark.json"
+    if not policy_path.exists():
+        return {}
+    return json.loads(policy_path.read_text(encoding="utf-8"))
+
+
+def read_text_if_exists(path: Path) -> str:
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def extract_toml_string(text: str, key: str) -> str | None:
+    match = re.search(rf'(?m)^{re.escape(key)}\s*=\s*"([^"]+)"\s*$', text)
+    return match.group(1) if match else None
+
+
+def extract_provider_block(text: str, provider_name: str) -> str | None:
+    lines = text.splitlines()
+    target_header = f"[model_providers.{provider_name}]"
+    start = None
+    for index, line in enumerate(lines):
+        if line.strip() == target_header:
+            start = index
+            break
+    if start is None:
+        return None
+
+    block_lines: list[str] = []
+    for line in lines[start:]:
+        if block_lines and line.startswith("[") and line.endswith("]"):
+            break
+        block_lines.append(line)
+    return "\n".join(block_lines).strip() if block_lines else None
+
+
+def resolve_benchmark_provider_settings(config: BenchmarkExecutionConfig) -> BenchmarkProviderSettings:
+    policy = load_provider_policy(config.repo_root)
+    source_codex_home = resolve_source_codex_home()
+    source_config_text = read_text_if_exists(source_codex_home / "config.toml")
+
+    model_provider = (
+        os.environ.get("EVCODE_BENCHMARK_MODEL_PROVIDER")
+        or policy.get("preferred_model_provider")
+        or extract_toml_string(source_config_text, "model_provider")
+        or "openai"
+    )
+    model = (
+        os.environ.get("EVCODE_BENCHMARK_MODEL")
+        or policy.get("preferred_model")
+        or extract_toml_string(source_config_text, "model")
+        or "gpt-5"
+    )
+    reasoning_effort = (
+        os.environ.get("EVCODE_BENCHMARK_REASONING_EFFORT")
+        or policy.get("preferred_reasoning_effort")
+        or extract_toml_string(source_config_text, "model_reasoning_effort")
+        or "high"
+    )
+    provider_block = extract_provider_block(source_config_text, model_provider)
+    auth_strategy = str(policy.get("auth_strategy")) if policy.get("auth_strategy") else None
+    return BenchmarkProviderSettings(
+        model_provider=model_provider,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        provider_block=provider_block,
+        source_codex_home=source_codex_home,
+        auth_strategy=auth_strategy,
+    )
+
+
+def build_benchmark_codex_config(workspace: Path, settings: BenchmarkProviderSettings) -> str:
     workspace_posix = workspace.resolve().as_posix()
-    return "\n".join(
+    lines = [
+        f'model_provider = "{settings.model_provider}"',
+        f'model = "{settings.model}"',
+        f'model_reasoning_effort = "{settings.reasoning_effort}"',
+        'profile = "benchmark"',
+        "disable_cron = true",
+        "",
+        "[profiles.benchmark]",
+        "disable_cron = true",
+        f'model_provider = "{settings.model_provider}"',
+        f'model = "{settings.model}"',
+        f'model_reasoning_effort = "{settings.reasoning_effort}"',
+        "",
+    ]
+    if settings.provider_block:
+        lines.extend([settings.provider_block, ""])
+    lines.extend(
         [
-            'profile = "benchmark"',
-            "disable_cron = true",
-            "",
-            "[profiles.benchmark]",
-            "disable_cron = true",
-            "",
             f'[projects."{workspace_posix}"]',
             'trust_level = "trusted"',
             "",
@@ -84,12 +182,23 @@ def build_benchmark_codex_config(workspace: Path) -> str:
             "",
         ]
     )
+    return "\n".join(lines)
 
 
-def materialize_benchmark_codex_home(config: BenchmarkExecutionConfig) -> Path:
+def copy_auth_material(settings: BenchmarkProviderSettings, destination_codex_home: Path) -> None:
+    auth_path = settings.source_codex_home / "auth.json"
+    if auth_path.exists():
+        shutil.copy2(auth_path, destination_codex_home / "auth.json")
+
+
+def materialize_benchmark_codex_home(config: BenchmarkExecutionConfig, settings: BenchmarkProviderSettings) -> Path:
     codex_home = config.session_root / "codex-home"
     codex_home.mkdir(parents=True, exist_ok=True)
-    (codex_home / "config.toml").write_text(build_benchmark_codex_config(config.workspace), encoding="utf-8")
+    (codex_home / "config.toml").write_text(
+        build_benchmark_codex_config(config.workspace, settings),
+        encoding="utf-8",
+    )
+    copy_auth_material(settings, codex_home)
     return codex_home
 
 
@@ -127,7 +236,13 @@ def render_executor_command(template: str, *, prompt_file: Path, workspace: Path
     return shlex.split(rendered)
 
 
-def build_command(config: BenchmarkExecutionConfig, prompt_file: Path, result_json_path: Path, assistant_output_path: Path) -> list[str]:
+def build_command(
+    config: BenchmarkExecutionConfig,
+    prompt_file: Path,
+    result_json_path: Path,
+    assistant_output_path: Path,
+    settings: BenchmarkProviderSettings,
+) -> list[str]:
     template = os.environ.get("EVCODE_BENCHMARK_EXECUTOR")
     host_bin = resolve_host_binary(config.repo_root, config.channel)
     if template:
@@ -152,11 +267,17 @@ def build_command(config: BenchmarkExecutionConfig, prompt_file: Path, result_js
         "--sandbox",
         "workspace-write",
         "--full-auto",
+        "--model",
+        settings.model,
         "--profile",
         "benchmark",
         "--ephemeral",
         "--output-last-message",
         str(assistant_output_path),
+        "-c",
+        f'model_provider="{settings.model_provider}"',
+        "-c",
+        f'model_reasoning_effort="{settings.reasoning_effort}"',
         "-c",
         "mcp_servers={}",
         prompt_file.read_text(encoding="utf-8"),
@@ -178,7 +299,8 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
     )
     prompt_file.write_text(build_prompt(config.task, config.artifacts_root), encoding="utf-8")
     result_json_path.parent.mkdir(parents=True, exist_ok=True)
-    codex_home = materialize_benchmark_codex_home(config)
+    provider_settings = resolve_benchmark_provider_settings(config)
+    codex_home = materialize_benchmark_codex_home(config, provider_settings)
 
     timeout_sec = int(os.environ.get("EVCODE_BENCHMARK_EXEC_TIMEOUT_SEC", "1800"))
     command: list[str] | None = None
@@ -186,7 +308,7 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
     exit_code: int | None = None
 
     try:
-        command = build_command(config, prompt_file, result_json_path, assistant_output_path)
+        command = build_command(config, prompt_file, result_json_path, assistant_output_path, provider_settings)
         exec_env = {
             **os.environ,
             "CODEX_HOME": str(codex_home),
@@ -238,6 +360,9 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "prompt_file": str(prompt_file),
         "assistant_output_path": str(assistant_output_path),
         "codex_home": str(codex_home),
+        "model_provider": provider_settings.model_provider,
+        "model": provider_settings.model,
+        "reasoning_effort": provider_settings.reasoning_effort,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
         "generated_at": utc_now(),
@@ -257,6 +382,9 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "prompt_file": str(prompt_file),
         "assistant_output_path": str(assistant_output_path),
         "codex_home": str(codex_home),
+        "model_provider": provider_settings.model_provider,
+        "model": provider_settings.model,
+        "reasoning_effort": provider_settings.reasoning_effort,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
         "result_json_path": str(result_json_path),

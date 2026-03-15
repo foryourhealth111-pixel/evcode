@@ -12,6 +12,11 @@ This runbook defines the minimum repeatable path for assembling and smoke-testin
 - the core benchmark closure must not require external MCP availability
 - benchmark artifacts must live outside the task workspace
 - each benchmark run materializes an isolated `CODEX_HOME` with `mcp_servers = {}`
+- each benchmark run pins the submission model route explicitly:
+  - provider: `rightcode`
+  - model: `gpt-5.4`
+  - reasoning effort: `xhigh`
+- each benchmark run copies `auth.json` from the source `CODEX_HOME` into the isolated benchmark `CODEX_HOME`
 
 ## Required Environment
 
@@ -26,6 +31,10 @@ Optional benchmark execution overrides:
 - `EVCODE_BENCHMARK_EXECUTOR`: shell-style command template used instead of the default host path
 - `EVCODE_BENCHMARK_EXEC_TIMEOUT_SEC`: execution timeout for the benchmark bridge
 - `EVCODE_BENCH_ENTRYPOINT`: installed-agent wrapper override for `evcode-bench`
+- `EVCODE_BENCHMARK_MODEL_PROVIDER`: override submission model provider
+- `EVCODE_BENCHMARK_MODEL`: override submission model
+- `EVCODE_BENCHMARK_REASONING_EFFORT`: override submission reasoning effort
+- `EVCODE_BENCH_SOURCE_CODEX_HOME`: source `CODEX_HOME` used to copy config/auth into the isolated benchmark home
 
 Supported placeholders inside `EVCODE_BENCHMARK_EXECUTOR`:
 
@@ -71,6 +80,7 @@ Expected outputs:
 - Official mode:
   - use the default `codex exec` path
   - let EvCode create its per-run isolated `CODEX_HOME`
+  - let EvCode copy `config.toml` provider settings and `auth.json` from the source `CODEX_HOME`
   - point `--artifacts-root` to a directory outside the task workspace
   - do not enable MCP or workstation-specific config
 - Debug mode:
@@ -92,7 +102,10 @@ Harbor route:
 Terminal-Bench installed-agent route:
 
 - `TerminalBenchEvCodeAgent` exposes `_install_agent_script_path`, `_run_agent_commands`, and `_env`
-- the bundled `setup.sh` installs an `evcode-bench` wrapper and expects either:
+- the bundled `setup.sh` installs an `evcode-bench` wrapper into the first writable path:
+  - `/usr/local/bin`, or
+  - `~/.local/bin`
+- it expects either:
   - `EVCODE_BENCH_ENTRYPOINT`, or
   - `EVCODE_REPO_ROOT`
 

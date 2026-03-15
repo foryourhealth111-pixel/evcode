@@ -18,6 +18,27 @@ class BenchmarkExecutionBridgeTests(unittest.TestCase):
             workspace = temp_root / "workspace"
             workspace.mkdir()
             artifacts_root = temp_root / "artifacts"
+            source_codex_home = temp_root / "source-codex-home"
+            source_codex_home.mkdir()
+            (source_codex_home / "config.toml").write_text(
+                """
+model_provider = "rightcode"
+model = "gpt-5.4"
+model_reasoning_effort = "high"
+
+[model_providers.rightcode]
+name = "rightcode"
+base_url = "https://right.codes/codex/v1"
+wire_api = "responses"
+requires_openai_auth = true
+""".strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            (source_codex_home / "auth.json").write_text(
+                json.dumps({"OPENAI_API_KEY": "sk-test-benchmark"}, indent=2),
+                encoding="utf-8",
+            )
             args_log = temp_root / "fake_codex_args.json"
             fake_codex = temp_root / "fake_codex"
             fake_codex.write_text(
@@ -54,6 +75,7 @@ sys.exit(0)
             env = {
                 **os.environ,
                 "EVCODE_BENCH_HOST_BIN": str(fake_codex),
+                "EVCODE_BENCH_SOURCE_CODEX_HOME": str(source_codex_home),
                 "FAKE_CODEX_ARGS_LOG": str(args_log),
             }
             completed = subprocess.run(
@@ -90,7 +112,18 @@ sys.exit(0)
             self.assertEqual("completed", result_payload["status"])
             self.assertTrue(Path(result_payload["codex_home"]).exists())
             config_toml = Path(result_payload["codex_home"]) / "config.toml"
-            self.assertIn("[mcp_servers]", config_toml.read_text(encoding="utf-8"))
+            config_text = config_toml.read_text(encoding="utf-8")
+            self.assertIn("[mcp_servers]", config_text)
+            self.assertIn('model_provider = "rightcode"', config_text)
+            self.assertIn('model = "gpt-5.4"', config_text)
+            self.assertIn('model_reasoning_effort = "xhigh"', config_text)
+            self.assertIn("[model_providers.rightcode]", config_text)
+            auth_json = Path(result_payload["codex_home"]) / "auth.json"
+            self.assertTrue(auth_json.exists())
+            self.assertEqual(
+                {"OPENAI_API_KEY": "sk-test-benchmark"},
+                json.loads(auth_json.read_text(encoding="utf-8")),
+            )
             args_payload = json.loads(args_log.read_text(encoding="utf-8"))
             self.assertEqual(str(workspace.resolve()), args_payload["cwd"])
             self.assertEqual(str(workspace.resolve()), args_payload["workspace_root"])
@@ -98,11 +131,15 @@ sys.exit(0)
 
             command = result_payload["command"]
             self.assertIn("--skip-git-repo-check", command)
+            self.assertIn("--model", command)
+            self.assertIn("gpt-5.4", command)
             self.assertIn("--profile", command)
             self.assertIn("benchmark", command)
             self.assertIn("--ephemeral", command)
             self.assertIn("--output-last-message", command)
             self.assertIn("mcp_servers={}", command)
+            self.assertIn('model_provider="rightcode"', command)
+            self.assertIn('model_reasoning_effort="xhigh"', command)
 
     def test_benchmark_run_redirects_artifacts_root_when_it_points_inside_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
