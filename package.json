@@ -11,6 +11,7 @@
     "install:check-deps": "bash scripts/install/check_build_deps.sh --channel standard",
     "install:source": "bash scripts/install/build_from_source.sh",
     "install:bench": "bash scripts/install/build_benchmark_from_source.sh",
+    "install:wrappers": "bash scripts/install/install_local_wrappers.sh",
     "doctor": "node apps/evcode/bin/evcode.js doctor",
     "status": "node apps/evcode/bin/evcode.js status --json",
     "status:bench": "node apps/evcode-bench/bin/evcode-bench.js status --json",

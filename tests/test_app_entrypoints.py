@@ -54,6 +54,22 @@ class AppEntrypointTests(unittest.TestCase):
     def test_standard_entrypoint_passthrough_launches_native_host(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             stub = make_stub_host(tempdir)
+            source_codex_home = Path(tempdir) / "source-codex-home"
+            source_codex_home.mkdir(parents=True, exist_ok=True)
+            (source_codex_home / "config.toml").write_text(
+                """
+model_provider = "rightcode"
+model = "gpt-5.4"
+
+[model_providers.rightcode]
+base_url = "https://right.codes/codex/v1"
+wire_api = "responses"
+requires_openai_auth = true
+""".strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            (source_codex_home / "auth.json").write_text('{"OPENAI_API_KEY":"test-key"}\n', encoding="utf-8")
             completed = subprocess.run(
                 ["node", str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"), "--version"],
                 cwd=REPO_ROOT,
@@ -64,12 +80,32 @@ class AppEntrypointTests(unittest.TestCase):
                     **os.environ,
                     "EVCODE_HOST_BIN": str(stub),
                     "EVCODE_DIST_OUTPUT_ROOT": tempdir,
+                    "EVCODE_SOURCE_CODEX_HOME": str(source_codex_home),
                 },
             )
             payload = json.loads(completed.stdout)
             self.assertEqual(["--version"], payload["argv"])
             self.assertEqual("interactive_governed", payload["evcode_mode"])
             self.assertEqual("standard", payload["evcode_channel"])
+            assembled_config = (Path(tempdir) / "standard" / "codex-home" / "config.toml").read_text(encoding="utf-8")
+            self.assertIn('model_provider = "rightcode"', assembled_config)
+            self.assertIn('model = "gpt-5.4"', assembled_config)
+            self.assertTrue((Path(tempdir) / "standard" / "codex-home" / "auth.json").exists())
+
+    def test_standard_status_reports_assembled_config_snapshot(self) -> None:
+        completed = subprocess.run(
+            ["node", str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"), "status", "--json"],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        payload = json.loads(completed.stdout)
+        self.assertEqual("standard", payload["channel"])
+        self.assertIn("bundled_host_available", payload)
+        self.assertIn("source_codex_home", payload)
+        if payload["assembled_distribution_exists"]:
+            self.assertIn("assembled", payload)
 
     def test_standard_entrypoint_uses_bundled_host_when_present(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

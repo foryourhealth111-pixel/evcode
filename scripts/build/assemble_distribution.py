@@ -8,6 +8,9 @@ import stat
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
+import re
+
+import toml
 
 
 def utc_now() -> str:
@@ -39,9 +42,82 @@ def write_text(path: Path, content: str, executable: bool = False) -> None:
         path.chmod(path.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 
-def build_config_toml(runtime_root: Path, profile: str) -> str:
+def read_text_if_exists(path: Path) -> str:
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def load_source_codex_config(source_codex_home: Path | None) -> dict:
+    if source_codex_home is None:
+        return {}
+    config_path = source_codex_home / "config.toml"
+    if not config_path.exists():
+        return {}
+    return toml.loads(config_path.read_text(encoding="utf-8"))
+
+
+def format_toml_value(value: object) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (int, float)):
+        return str(value)
+    return json.dumps(value)
+
+
+def quote_table_part(part: str) -> str:
+    return part if re.match(r"^[A-Za-z0-9_-]+$", part) else json.dumps(part)
+
+
+def render_toml_table(parts: list[str], table: dict) -> list[str]:
+    lines = [f"[{'.'.join(quote_table_part(part) for part in parts)}]"]
+    nested_tables: list[tuple[list[str], dict]] = []
+    for key, value in table.items():
+        if isinstance(value, dict):
+            nested_tables.append((parts + [key], value))
+            continue
+        lines.append(f"{key} = {format_toml_value(value)}")
+    lines.append("")
+    for nested_parts, nested_table in nested_tables:
+        lines.extend(render_toml_table(nested_parts, nested_table))
+    return lines
+
+
+def build_adopted_config_lines(source_config: dict) -> list[str]:
+    top_level_keys = [
+        "model_provider",
+        "model",
+        "model_reasoning_effort",
+        "model_verbosity",
+        "network_access",
+        "disable_response_storage",
+        "windows_wsl_setup_acknowledged",
+        "ask_for_approval",
+        "dangerously_bypass_approvals_and_sandbox",
+        "full-auto",
+        "bypass-approvals",
+        "bypass-sandbox",
+        "sandbox_mode",
+        "trusted-workspace",
+    ]
+    table_keys = ["model_providers", "mcp_servers", "projects", "notice"]
+    lines: list[str] = []
+    for key in top_level_keys:
+        if key in source_config:
+            lines.append(f"{key} = {format_toml_value(source_config[key])}")
+    if lines:
+        lines.append("")
+    for table_key in table_keys:
+        table = source_config.get(table_key)
+        if isinstance(table, dict) and table:
+            lines.extend(render_toml_table([table_key], table))
+    return lines
+
+
+def build_config_toml(runtime_root: Path, profile: str, source_config: dict | None = None) -> str:
     hooks_root = runtime_root / "hooks"
-    return "\n".join(
+    lines: list[str] = []
+    if source_config:
+        lines.extend(build_adopted_config_lines(source_config))
+    lines.extend(
         [
             f'profile = "{profile}"',
             "disable_cron = false",
@@ -65,6 +141,7 @@ def build_config_toml(runtime_root: Path, profile: str) -> str:
             "",
         ]
     )
+    return "\n".join(lines)
 
 
 def build_launcher(binary_name: str, mode: str, channel: str, profile: str, host_binary: str) -> str:
@@ -137,6 +214,19 @@ def stage_skills(repo_root: Path, codex_home: Path, link_mode: str) -> None:
     stage_directory(bundled_skills, codex_home / "skills", link_mode)
 
 
+def stage_source_codex_material(source_codex_home: Path | None, codex_home: Path) -> dict[str, bool]:
+    copied = {"auth_json": False, "env_local": False}
+    if source_codex_home is None:
+        return copied
+    for filename, manifest_key in (("auth.json", "auth_json"), ("env.local", "env_local")):
+        source = source_codex_home / filename
+        if not source.exists():
+            continue
+        shutil.copy2(source, codex_home / filename)
+        copied[manifest_key] = True
+    return copied
+
+
 def stage_patch_file(repo_root: Path, dist_root: Path) -> Path:
     patch_source = repo_root / "vendor" / "codex-host" / "patches" / "subagent-vibe-suffix.patch"
     patch_target = dist_root / "vendor" / "codex-host" / "patches" / "subagent-vibe-suffix.patch"
@@ -170,6 +260,7 @@ def main() -> int:
     parser.add_argument("--host-binary", default="", help="Host binary path or command name")
     parser.add_argument("--bundled-host-binary", default="", help="Optional patched host binary to embed in the distribution")
     parser.add_argument("--stage-patched-host-source", action="store_true")
+    parser.add_argument("--source-codex-home", default="", help="Optional source CODEX_HOME to adopt model/provider/auth settings from")
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
@@ -189,7 +280,10 @@ def main() -> int:
     codex_home = dist_root / "codex-home"
     stage_runtime(repo_root, runtime_root, args.link_mode)
     stage_skills(repo_root, codex_home, args.link_mode)
-    write_text(codex_home / "config.toml", build_config_toml(runtime_root, profile))
+    source_codex_home = Path(args.source_codex_home).expanduser().resolve() if args.source_codex_home else None
+    source_config = load_source_codex_config(source_codex_home)
+    write_text(codex_home / "config.toml", build_config_toml(runtime_root, profile, source_config))
+    copied_source_material = stage_source_codex_material(source_codex_home, codex_home)
 
     metadata_root = dist_root / "metadata"
     stage_metadata(repo_root, metadata_root)
@@ -222,6 +316,9 @@ def main() -> int:
         "bundled_host_binary": str(bundled_host_binary) if bundled_host_binary else None,
         "patch_file": str(patch_target),
         "patched_host_source": str(patched_host_root) if patched_host_root else None,
+        "source_codex_home": str(source_codex_home) if source_codex_home else None,
+        "copied_auth_json": copied_source_material["auth_json"],
+        "copied_env_local": copied_source_material["env_local"],
     }
     write_text(metadata_root / "assembly-manifest.json", json.dumps(manifest, indent=2))
     print(json.dumps(manifest, indent=2))

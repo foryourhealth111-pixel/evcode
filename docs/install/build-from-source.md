@@ -45,6 +45,12 @@ Validate dependencies before building:
 scripts/install/check_build_deps.sh --channel standard
 ```
 
+Install local developer wrappers after the first build:
+
+```bash
+scripts/install/install_local_wrappers.sh
+```
+
 ## Build The Standard Channel
 
 One command:
@@ -57,6 +63,7 @@ This builds:
 
 - patched host: `.evcode-build/host/codex`
 - assembled standard dist: `.evcode-dist/standard`
+- if `~/.codex` exists, EvCode also adopts its active `config.toml`, `auth.json`, and `env.local` into the assembled `codex-home`
 
 ## Manual Build Steps
 
@@ -84,8 +91,22 @@ Or through the repository app shim:
 node apps/evcode/bin/evcode.js native
 ```
 
+Local wrapper commands then resolve to the repository entrypoints:
+
+```bash
+evcode status --json
+evcode doctor
+```
+
+Inspect the assembled local config snapshot:
+
+```bash
+evcode status --json
+```
+
 ## Notes
 
 - The standard source build is the canonical local install path.
+- Local source builds intentionally mirror the active Codex CLI provider settings when a source `CODEX_HOME` is available.
 - Release tarballs are convenience artifacts, not the primary installation contract.
 - If you are building for benchmark reproduction, use the dedicated benchmark build path instead of the standard one.
