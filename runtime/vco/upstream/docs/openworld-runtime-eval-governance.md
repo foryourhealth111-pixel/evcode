@@ -17,6 +17,9 @@ The harness exists to compare candidate surfaces against existing BrowserOps and
 - `browser-use` and `Agent-S` stay candidate-only until scorecard, replay, rollback, and operator evidence agree.
 - The harness cannot silently change provider priority or bypass operator confirmation.
 - Evaluation scenarios must reference rollback plans and evidence refs, not transient screenshots alone.
+- `browser-use` eval traces must distinguish `search_page` text lookup from `find_elements` structural probing.
+- The harness must not assume `read_long_content`; bounded extraction or explicit fallback evidence is required instead.
+- Prompt continuity and gateway/auth drift are recorded as provider-preview evidence, not as ownership changes.
 
 ## Non-Goals
 

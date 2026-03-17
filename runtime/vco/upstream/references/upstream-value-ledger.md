@@ -13,14 +13,29 @@
 | `awesome-claude-skills-composio` | `skill_catalog_source` | `partial_absorption` | skill harvest source with downstream reuse | `vco/skill-corpus` | Continue selective skill harvesting under canonical pack routing and connector guardrails. |
 | `awesome-mcp-servers` | `connector_admission` | `catalog_governed` | MCP server catalog / scouting feed | `vco/connector-admission` | Curate catalog snapshots into the connector admission allowlist; never auto-install from the catalog. |
 | `awesome-vibe-coding` | `discovery_eval_corpus` | `tracked_corpus` | workflow discovery corpus | `vco/discovery-corpus` | Harvest workflow references into discovery and eval notes only. |
-| `browser-use` | `browserops_provider_source` | `shadow_governed` | provider candidate 与 open-world browsing eval source | `vco/browserops` | Retain browser-use as an advice/shadow-first provider candidate and keep provider takeover forbidden. |
+| `browser-use` | `browserops_provider_source` | `shadow_governed` | provider candidate 与 open-world browsing eval source | `vco/browserops` | Keep browser-use candidate-only while documenting `search_page` vs `find_elements`, forbidding `read_long_content` assumptions, and treating gateway/auth drift as preview evidence only. |
 | `claude-skills` | `skill_catalog_source` | `partial_absorption` | upstream inspiration library with partial downstream reuse | `vco/skill-corpus` | Import only contract-compatible skill fragments and keep the rest mirrored as reference. |
 | `composio` | `connector_admission` | `shadow_governed` | connector templates and action surfaces | `vco/connector-admission` | Map connector templates to risk classes and secret profiles before any promotion. |
-| `docling` | `document_plane_contract` | `canonical_contract` | document plane primary contract source | `vco/document-plane` | Sync the canonical contract, provider policy, and recovered spec into packaged mirrors after gate pass. |
-| `letta` | `memory_policy_source` | `partial_absorption` | memory-policy vocabulary 与 conformance contract source | `vco/memory-governance` | Keep Letta as a policy/vocabulary source only and convert remaining retention / conformance slices into auditable eval assets. |
-| `mem0` | `memory_policy_source` | `shadow_governed` | optional preference-memory backend candidate | `vco/memory-governance` | Keep mem0 opt-in and replayable, never as canonical session or project truth-source. |
-| `prompt-engineering-guide` | `prompt_contract_source` | `partial_absorption` | prompt governance source for pattern cards and review heuristics | `vco/prompt-governance` | Convert stable prompt patterns into canonical cards and risk review checklists. |
+| `docling` | `document_plane_contract` | `canonical_contract` | document plane primary contract source | `vco/document-plane` | Keep the contract aligned through bounded OOXML intake rules, benchmark/taxonomy refresh, and packaged mirror sync after gate pass. |
+| `letta` | `memory_policy_source` | `partial_absorption` | memory-policy vocabulary 与 conformance contract source | `vco/memory-governance` | Keep Letta as a contract-source-only policy vocabulary surface; current upstream drift is security/release hygiene and does not justify broader runtime or ownership intake. |
+| `mem0` | `memory_policy_source` | `shadow_governed` | optional preference-memory backend candidate | `vco/memory-governance` | Keep mem0 opt-in and replayable while admitting OpenAI-compatible `baseURL`, durable SQLite path guidance, and fenced-payload preservation only inside the optional preference lane. |
+| `prompt-engineering-guide` | `prompt_contract_source` | `partial_absorption` | prompt governance source for pattern cards and review heuristics | `vco/prompt-governance` | Keep Prompt-Engineering-Guide as a source for stable cards/checklists only; current upstream drift is site/repo hygiene and does not justify new canonical prompt assets. |
 | `vibe-coding-cn` | `discovery_eval_corpus` | `tracked_corpus` | multilingual vibe-coding discovery corpus | `vco/discovery-corpus` | Keep as multilingual discovery corpus and summarize patterns instead of promoting it into runtime ownership. |
+
+## 2026-03-17 Wave C/D Re-Audit Notes
+
+| Source | Decision | Admission scope |
+|---|---|---|
+| `agent-squad` | `admit` | pattern-refresh-only |
+| `awesome-agent-skills` | `admit` | role-card-overlay-only |
+| `awesome-claude-code-subagents` | `admit` | team-template-and-review-archetype-refresh-only |
+| `claude-skills` | `admit` | skill-distillation-rule-refresh-only |
+| `antigravity-awesome-skills` | `metadata-only` | taxonomy-and-quality-evidence-only |
+| `awesome-claude-skills-composio` | `admit` | curated-root-and-catalog-quarantine-rule-only |
+| `awesome-vibe-coding` | `admit` | workflow-discovery-refresh-only |
+| `vibe-coding-cn` | `admit` | localization-and-multilingual-eval-refresh-only |
+| `awesome-ai-tools` | `metadata-only` | watchlist-and-gap-evidence-only |
+| `awesome-ai-agents-e2b` | `metadata-only` | sandbox-eval-reference-only |
 
 ## Reading Rule
 

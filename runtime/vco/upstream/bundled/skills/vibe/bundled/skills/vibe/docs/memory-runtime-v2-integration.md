@@ -33,6 +33,9 @@ The tier router does not replace `config/memory-governance.json`; it clarifies e
 ### `mem0`
 - allowed: recurring user preferences, style hints, reusable personal constraints
 - forbidden: route assignment, canonical project decisions, primary execution state
+- support intake: OpenAI-compatible embedder `baseURL` is allowed only inside the optional backend lane
+- storage rule: backend state must use an operator-controlled durable path, not an implicit writable `cwd`
+- payload rule: structured content inside code fences must be preserved for admission review, not silently stripped
 
 ### `Letta`
 - allowed: memory block mapping, archival search contract, tool-rule contract, token-pressure policy

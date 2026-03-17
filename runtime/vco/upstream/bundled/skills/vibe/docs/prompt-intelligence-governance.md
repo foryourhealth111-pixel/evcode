@@ -33,3 +33,8 @@ They must not replace `selected.pack_id` or `selected.skill`.
 - `shadow`: assets exist and quality checks may be emitted
 - `soft`: higher-risk candidates can be converted into confirmation prompts
 - `strict`: can require the presence of quality metadata, but still cannot become a router
+
+## Current upstream re-audit note
+
+Prompt-Engineering-Guide upstream may change site chrome, CTA copy, examples, or repository hygiene without changing the stable guidance already distilled into VCO cards and checklists.
+Those updates refresh source metadata, but do not automatically justify new canonical prompt assets.

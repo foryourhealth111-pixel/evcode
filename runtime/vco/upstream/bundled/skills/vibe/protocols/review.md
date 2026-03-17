@@ -38,6 +38,22 @@ Always available as an independent check:
 2. Checks: OWASP Top 10, hardcoded secrets, injection, XSS, CSRF
 3. Can run alongside any grade-specific review without conflict
 
+## Anti-Proxy-Goal-Drift Review Lens
+
+When the canonical anti-proxy-goal-drift policy is active, every governed review should also answer:
+
+1. What is the primary objective the change claims to serve?
+2. Which proxy signals could be mistaken for true success?
+3. Was validation material kept in a validation role, or did it leak into product logic?
+4. Is the claimed completion state supported by evidence, or is the wording ahead of the proof?
+5. Was the fix applied at the correct abstraction layer, rather than only removing the local symptom?
+6. Is a bounded specialization being described honestly, or is it being relabeled as generalized capability?
+
+Report-only boundary:
+- Anti-drift findings are review evidence and completion-language corrections.
+- They do not by themselves create a new hard gate, new owner, or automatic merge block.
+- If another approved policy or gate is violated, cite that surface explicitly instead of treating anti-drift as hidden enforcement.
+
 ## Review Checklist
 Before approving code:
 1. Code is readable and well-named
@@ -50,6 +66,11 @@ Before approving code:
 8. Immutable patterns used (no mutation)
 9. No new fallback or degraded-path logic unless the active requirement explicitly approves it
 10. Any fallback path is labeled as a hazard, not presented as equivalent success
+11. The reviewed change states its primary objective, not only its local success signal
+12. Validation material is not absorbed into product logic or route truth
+13. The claimed completion state matches the evidence bundle and scope
+14. Bounded specialization is either preserved as specialization or explicitly marked as not-yet-generalized
+15. Any anti-drift warning is recorded as report-only review evidence, not hidden hard enforcement
 
 ## Output Format
 Review findings categorized by severity:
@@ -61,6 +82,13 @@ Review findings categorized by severity:
 Fallback-specific review rule:
 - Treat silent fallback, silent degradation, or self-introduced fallback logic as HIGH at minimum and CRITICAL when it can hide capability loss from users.
 
+Objective-protection disposition:
+- `aligned`: objective, scope, and completion wording match the evidence.
+- `report_only_warning`: drift risk exists and must be recorded in review / closure language, but does not by itself block merge.
+- `specialization_confirmed`: the change is valid as a bounded specialization and must not be relabeled as generalized capability.
+- `completion_language_corrected`: code may stand, but the claimed completion wording must be reduced to match proof.
+- `escalate_via_existing_policy`: another already-approved policy or hard gate is independently violated and should be cited directly.
+
 ## Conflict Avoidance
 - M review: Everything-CC code-reviewer ONLY
 - L review: Superpowers two-stage review ONLY
@@ -69,5 +97,8 @@ Fallback-specific review rule:
 
 ## Transition After Review
 - CRITICAL/HIGH issues found: Route to vibe-do protocol for fixes
+- `report_only_warning` or `completion_language_corrected`: update requirement / plan / CER / closure wording or route to vibe-do for scope-corrective fixes
+- `specialization_confirmed`: preserve specialization wording and avoid generalized overclaim
+- `escalate_via_existing_policy`: cite the specific approved policy or gate that blocks progress
 - All clean: Proceed to commit/merge
 - Architectural issues found: Route to vibe-think protocol for redesign

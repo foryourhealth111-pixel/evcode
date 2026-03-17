@@ -52,6 +52,12 @@ Docling 的模板姿态分成两层：
 - `page_ocr_only`
 - `failure_object`
 
+输入面补充约束：
+
+- 对无扩展名的 Office/OpenXML 文档，只允许通过本地 ZIP 容器内容检查来恢复有效 MIME；
+- `application/zip` 只有在能被正向识别为 `docx` / `pptx` / `xlsx` 时才进入 document plane；
+- 这种 MIME 恢复属于本地 intake 正规化，不构成远程抓取、URL 扩张或新的 enablement 语义。
+
 ## Admission Filter
 
 Docling 的 admission filter 固定为：

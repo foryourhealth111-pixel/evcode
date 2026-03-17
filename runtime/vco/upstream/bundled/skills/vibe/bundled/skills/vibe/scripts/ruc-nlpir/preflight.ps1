@@ -143,9 +143,8 @@ if ($search) {
 
 Write-Section "Recommendation"
 if (-not $venvOk) {
-  $installScript = Join-Path $CodexRoot "skills\\vibe\\scripts\\ruc-nlpir\\install-upstreams.ps1"
-  Write-Host "- Create venv + minimal deps: " -NoNewline
-  Write-Host ("powershell -ExecutionPolicy Bypass -File `"{0}`" -Profile minimal" -f $installScript) -ForegroundColor Green
+  Write-Host "- Create an isolated venv manually for the vendored runtime (auto-install script removed)." -ForegroundColor Yellow
+  Write-Host "- Then install only the minimal packages you actually need into that venv." -ForegroundColor Yellow
 }
 if (-not $apiKeySet) {
   Write-Host "- Set LLM key via env var: $apiKeyEnv (do NOT paste secrets into files or CLI history)."

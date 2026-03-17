@@ -62,3 +62,10 @@ pwsh -File .\scripts\verify\vibe-keyword-precision-audit.ps1
 - 有统一 schema；
 - 有 gate 能验证；
 - 但尚未自动升级为 soft/strict/promote runtime authority。
+
+## 7. 2026-03-17 Source Health Notes
+
+- `pilot-discovery-vibe-workflows`: upstream remains active; keep refreshing terminology and workflow anti-pattern evidence.
+- `pilot-cn-query-localization`: upstream remains active; keep refreshing Chinese-language prompts and Codex-oriented phrasing.
+- `pilot-tool-landscape-watch`: upstream remains broad and noisy; use it only for watchlist deltas and capability-gap accounting.
+- `pilot-e2b-sandbox-eval`: upstream is relatively stale; keep the scenario alive only as eval/reference evidence until a fresher canonical sandbox challenger appears.

@@ -110,3 +110,10 @@ material layer 只回答三类问题：
 ## 9. 当前结论
 
 > `awesome-vibe-coding`、`awesome-ai-tools`、`vibe-coding-cn`、`awesome-ai-agents-e2b` 只被吸收到 discovery / eval / capability material layer；它们可以影响 catalog、pilot、evidence，但不能直接长成第二 runtime surface / second runtime surface。
+
+## 10. 2026-03-17 Wave D Re-Audit Notes
+
+- `awesome-vibe-coding` 在 2026-03 继续新增 workflow/tool references，适合刷新 discovery phrasing 与 anti-pattern evidence，但不形成新的 vibe runtime。
+- `vibe-coding-cn` 持续更新 Codex guidance 与 multi-agent 说明，适合补强中文术语、localized eval prompts 与 discovery 语料，但不允许长出独立中文 router。
+- `awesome-ai-tools` 仍是宽泛 watchlist，适合登记 capability gap 与 vendor landscape，不适合作为新的 tool registry runtime。
+- `awesome-ai-agents-e2b` 近期更新明显放缓，但其 sandbox / remote execution 示例仍能服务 eval corpus；因此保留为 eval-only material layer，不进入执行 owner。

@@ -621,6 +621,14 @@ function Get-VgoNodeProcessAuditRows {
         $classificationCounts[$key]++
     }
 
+    $workingSetSum = 0.0
+    if ($rows.Count -gt 0) {
+        $measure = $rows | Measure-Object -Property working_set_mb -Sum
+        if ($null -ne $measure -and $measure.PSObject.Properties.Name -contains 'Sum' -and $null -ne $measure.Sum) {
+            $workingSetSum = [double]$measure.Sum
+        }
+    }
+
     $summary = [ordered]@{
         case_id = [string]$inputData.case_id
         source = [string]$inputData.source
@@ -629,7 +637,7 @@ function Get-VgoNodeProcessAuditRows {
         cleanup_candidate_count = @($rows | Where-Object { $_.cleanup_candidate }).Count
         external_count = @($rows | Where-Object { $_.ownership -eq [string]$healthPolicy.ownership_contract.external }).Count
         unknown_count = @($rows | Where-Object { $_.ownership -eq [string]$healthPolicy.ownership_contract.unknown }).Count
-        total_working_set_mb = [double][Math]::Round(((@($rows | Measure-Object -Property working_set_mb -Sum).Sum)), 2)
+        total_working_set_mb = [double][Math]::Round($workingSetSum, 2)
         classifications = $classificationCounts
     }
 

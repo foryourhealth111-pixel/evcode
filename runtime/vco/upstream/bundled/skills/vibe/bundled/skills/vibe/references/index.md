@@ -96,6 +96,7 @@ Navigation guide for VCO long-lived contracts, registries, matrices, ledgers, sc
 | [connector-simulation-scenarios.md](./connector-simulation-scenarios.md) | connector sandbox / simulation 场景 |
 | [document-golden-corpus.md](./document-golden-corpus.md) | 文档平面 golden corpus |
 | [document-failure-taxonomy.md](./document-failure-taxonomy.md) | document failure taxonomy |
+| [prompt-pattern-cards.md](./prompt-pattern-cards.md) | prompt pattern cards |
 | [prompt-risk-checklist.md](./prompt-risk-checklist.md) | prompt risk checklist |
 | [upstream-distillation-quality-bar.md](./upstream-distillation-quality-bar.md) | upstream distillation quality bar |
 | [fixtures/README.md](./fixtures/README.md) | fixture migration stage2 的 baseline / migration map 入口 |

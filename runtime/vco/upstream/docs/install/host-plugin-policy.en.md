@@ -105,6 +105,13 @@ Not because they have no value, but because:
 | `claude-code-settings` | deferred by default | when you explicitly want its settings layer as host authority | can overlap with existing settings and fallbacks |
 | `ralph-loop` | deferred by default | when you explicitly need upstream Ralph loop behavior/backend | baseline compatibility already exists in-repo |
 
+## 2026-03-17 Wave B Re-Audit Notes
+
+- `superpowers` is currently reviewed at `363923f74aa9cd7b470c0aaa73dee629a8bfdc90` (v5.0.2 release surface). The meaningful upstream drift is subagent context isolation plus owner-aware cleanup. That strengthens its recommend-first posture, but does not change VCO's ownership of the governed runtime or router.
+- `claude-code-settings` is currently reviewed at `d0c0d2759f8aadfba1b3361b5860024e4a7e68d4`, with drift concentrated in config/skill refinement. That is not enough to restore settings-layer host authority, so its posture stays deferred.
+- `spec-kit` is currently reviewed at `b1650f884d48eb57a9b76bfabb0b205b39099799`, including new upstream commands such as `specify status`. Inside VCO it remains methodology/reference input plus the `spec-kit-vibe-compat` bridge, not a second command authority.
+- `ralph-claude-code` is currently reviewed at `f1298b8af985a401ed67249365c8f18a8b74ef12`, where the latest drift is loop exit / quota exhaustion fixes. VCO only admits that as optional backend guidance and keeps the in-repo `compat` engine as the baseline.
+
 ## Suggested Install Paths
 
 ### Path A: default path for ordinary users

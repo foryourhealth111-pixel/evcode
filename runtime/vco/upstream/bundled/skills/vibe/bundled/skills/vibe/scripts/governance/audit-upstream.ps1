@@ -263,7 +263,10 @@ if ($manifest -and $manifest.plugins) {
     foreach ($tierProperty in @($manifest.plugins.PSObject.Properties)) {
         $tier = [string]$tierProperty.Name
         foreach ($plugin in @($tierProperty.Value)) {
-            $repoUrl = Normalize-GitHubRepoUrl -Url ([string]$plugin.repo)
+            $repoUrl = ''
+            if ($null -ne $plugin -and $plugin.PSObject.Properties.Name -contains 'repo' -and $plugin.repo) {
+                $repoUrl = Normalize-GitHubRepoUrl -Url ([string]$plugin.repo)
+            }
             if ([string]::IsNullOrWhiteSpace($repoUrl)) { continue }
             $id = if ($plugin.PSObject.Properties.Name -contains 'id' -and $plugin.id) { [string]$plugin.id } elseif ($plugin.PSObject.Properties.Name -contains 'name' -and $plugin.name) { [string]$plugin.name } else { $repoUrl }
             $pluginEntries += [pscustomobject]@{

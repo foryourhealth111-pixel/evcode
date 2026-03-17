@@ -30,6 +30,25 @@ The fixed runtime path remains:
 `retro.md` never replaces those stages.
 It consumes their receipts and artifacts to improve future runs.
 
+## Anti-Proxy-Goal-Drift Retro Lens
+
+Retro treats proxy-goal drift as a first-class learning failure mode.
+The point is not to punish work after the fact.
+The point is to preserve honest completion language, prevent objective/proxy substitution from becoming normalized, and keep specialization distinct from false generalization.
+
+In official `report_only` mode:
+- record warning codes, completion-language corrections, and specialization findings,
+- do not silently convert those findings into a new hard gate,
+- if another approved blocking policy was violated, cite that policy directly.
+
+Core retro questions:
+1. What objective did the work claim to serve?
+2. Which proxy signals were optimized instead?
+3. Did validation material stay outside implementation truth?
+4. Was the repair made at the intended abstraction layer?
+5. Was the final completion state honest for the actual scope and evidence?
+6. Was a bounded specialization preserved honestly, or was it flattened into a generalized claim?
+
 ## Context Retro Advisor (Agent-Skills Guided)
 
 VCO uses Agent-Skills-for-Context-Engineering as an expert advisor in retro mode.
@@ -100,6 +119,7 @@ Tool: session/tool trace synthesis
 - Count retries, fallback frequency, and compaction events
 - Measure large-output tool calls and repeated low-value observations
 - Detect route instability (same intent, different route outcomes)
+- Collect review language, closure wording, and any report-only anti-drift warnings emitted during execution
 
 #### Default Trigger Thresholds
 
@@ -165,6 +185,21 @@ Map each failure class to interventions:
 - Memory indexing/persistence policy adjustments
 - Evaluation rubric and verification gate hardening
 
+### 2.7 Anti-Drift Classification
+For governed retros, also classify whether the run showed:
+- objective / proxy substitution,
+- validation-material contamination,
+- abstraction-layer mismatch,
+- completion-state overclaim,
+- specialization erasure.
+
+Each classification must end in one of these dispositions:
+- `aligned`
+- `report_only_warning`
+- `completion_language_corrected`
+- `specialization_confirmed`
+- `escalate_via_existing_policy`
+
 ---
 
 ## Phase 3: DISCUSS (Interactive Discussion)
@@ -186,6 +221,8 @@ Map each failure class to interventions:
 - Context quality: compression policy, masking policy, partitioning strategy
 - Tool effectiveness: routing accuracy, fallback frequency
 - Future planning: templates, skills, new tools
+- Completion honesty: whether the reported end-state matched objective, scope, and proof
+- Specialization boundaries: whether bounded wins were preserved honestly rather than generalized by habit
 
 **Respectful Autonomy:**
 - User makes all final decisions
@@ -204,6 +241,7 @@ Map each failure class to interventions:
 | Error prevention | Create hook | hookify:hookify |
 | Behavioral pattern | Create/update instinct | continuous-learning-v2 |
 | Context quality | Update retro policy/playbook | Edit protocols/retro.md + docs |
+| Completion honesty correction | Update review / CER / closure wording | Edit protocols/templates/docs |
 | Routing improvement | Update VCO config | Edit SKILL.md / config/*.json |
 | Knowledge capture | Persist memory | Serena write_memory + Cognee ingest (optional) |
 | Complex automation | Create agent | Manual design + writing-skills |
@@ -283,6 +321,22 @@ Every Context Retro Advisor analysis MUST output this schema:
 6. Confidence: high/medium/low with scope limits
 
 No recommendation should be emitted without Evidence.
+
+Every governed CER should also preserve the shared anti-drift vocabulary:
+- `governance_mode`
+- `anti_proxy_goal_drift_tier`
+- `completion_state`
+- `primary_objective`
+- `non_objective_proxy_signals`
+- `validation_material_role`
+- `intended_scope`
+- `specialization_assessment`
+- `generalization_evidence_bundle`
+- `report_only_warning_codes`
+- `completion_honesty_notes`
+
+`report_only_warning_codes` are governance evidence, not a hidden hard stop.
+If a retro recommends blocking action, it must name the separate approved policy or hard gate that justifies the block.
 
 ### CER JSON Validation
 - Validate generated JSON against `templates/cer-report.schema.json` when available.

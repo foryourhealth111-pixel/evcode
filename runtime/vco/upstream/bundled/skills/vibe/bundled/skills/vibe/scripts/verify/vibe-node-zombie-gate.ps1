@@ -161,6 +161,14 @@ $cleanupScript = Join-Path $repoRoot "scripts\governance\Invoke-NodeZombieCleanu
 
 $cases = @(
     [pscustomobject]@{
+        case_id = "no-node-processes"
+        fixture = Join-Path $fixturesDir "no-node-processes-fixture.json"
+        expected_classifications = @{}
+        expected_candidate_entry_ids = @()
+        expect_report_reason = $null
+        expect_apply_reason = $null
+    },
+    [pscustomobject]@{
         case_id = "healthy-managed"
         fixture = Join-Path $fixturesDir "healthy-managed-fixture.json"
         expected_classifications = @{ managed_live = 1 }

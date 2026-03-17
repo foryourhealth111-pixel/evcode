@@ -105,6 +105,13 @@ bash ./check.sh --profile full --deep
 | `claude-code-settings` | 默认不装 | 明确要把其上游 settings 面作为宿主权威层时 | 容易和现有本地 settings / fallback 混叠 |
 | `ralph-loop` | 默认不装 | 明确需要上游 Ralph loop 原生工作流或后端时 | 仓库已有兼容 / fallback 面，先装收益不高 |
 
+## 2026-03-17 Wave B Re-Audit Notes
+
+- `superpowers` 上游当前已到 `363923f74aa9cd7b470c0aaa73dee629a8bfdc90`（v5.0.2 release surface），新增重点是 subagent context isolation 与 owner-aware cleanup。这强化了它“推荐优先安装”的地位，但不改变 VCO 对 governed runtime / router 的主权。
+- `claude-code-settings` 当前 reviewed head 为 `d0c0d2759f8aadfba1b3361b5860024e4a7e68d4`，主要是 config/skills refinement，不足以让它重新获得 host settings authority，因此继续保持 deferred posture。
+- `spec-kit` 当前 reviewed head 为 `b1650f884d48eb57a9b76bfabb0b205b39099799`，虽然新增 `specify status` 等上游能力，但在 VCO 中仍只以 methodology/reference 与 `spec-kit-vibe-compat` bridge 的方式存在。
+- `ralph-claude-code` 当前 reviewed head 为 `f1298b8af985a401ed67249365c8f18a8b74ef12`，最新 drift 主要是 loop exit / quota exhaustion 修复。VCO 只吸收 optional backend guidance，不把默认基线从 `compat` engine 改成上游 open backend。
+
 ## 推荐安装路径
 
 ### 路径 A：普通用户默认路径

@@ -85,8 +85,11 @@ function Test-FileContainsKeywords {
     }
 
     $raw = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+    $normalizedRaw = (($raw.ToLowerInvariant() -replace '[_-]+', ' ') -replace '\s+', ' ').Trim()
     foreach ($keyword in $Keywords) {
-        $pass = $raw.Contains([string]$keyword)
+        $keywordText = [string]$keyword
+        $normalizedKeyword = (($keywordText.ToLowerInvariant() -replace '[_-]+', ' ') -replace '\s+', ' ').Trim()
+        $pass = $raw.Contains($keywordText) -or $normalizedRaw.Contains($normalizedKeyword)
         Add-Assertion -Assertions $Assertions -Pass $pass -Message ('keyword present: {0} -> {1}' -f $keyword, (Get-VgoRelativePathPortable -BasePath $RepoRoot -TargetPath $Path)) -Details $keyword
     }
 }

@@ -13,6 +13,11 @@
       "requires_failure_object": true
     },
     {
+      "id": "mime_detection_gap",
+      "severity": "high",
+      "requires_failure_object": true
+    },
+    {
       "id": "artifact_bundle_gap",
       "severity": "high",
       "requires_failure_object": true
@@ -24,6 +29,11 @@
     },
     {
       "id": "page_alignment_loss",
+      "severity": "medium",
+      "requires_failure_object": false
+    },
+    {
+      "id": "table_structure_regression",
       "severity": "medium",
       "requires_failure_object": false
     }

@@ -59,6 +59,7 @@ Complete reference of VCO execution tools, their capabilities, APIs, state paths
 - HARD-GATE on brainstorming: no implementation before design approval
 - Stateless: no global state, all context in conversation
 - Skill shadowing: personal skills override superpowers skills
+- Wave B upstream review (2026-03-17): observed head `363923f74aa9cd7b470c0aaa73dee629a8bfdc90` / v5.0.2 emphasizes subagent context isolation and owner-aware cleanup; VCO admits the policy signal but keeps repo-governed mirrors authoritative.
 
 ### Sub-plugin: episodic-memory (disabled in VCO governance)
 - Component availability: MCP server with `search` and `read` tools
@@ -113,6 +114,7 @@ Complete reference of VCO execution tools, their capabilities, APIs, state paths
 - `open` engine: delegates to external open-ralph-wiggum CLI for auto-iteration (`--engine open`)
 - `cancel-ralph` only manages `compat` local state
 - Ralph-loop remains mutually exclusive with active XL team orchestration
+- Wave B upstream review (2026-03-17): observed head `f1298b8af985a401ed67249365c8f18a8b74ef12` improves stale-exit and quota-exhaustion handling in the optional upstream backend; VCO records this as optional backend guidance only.
 
 ---
 
@@ -152,6 +154,7 @@ Complete reference of VCO execution tools, their capabilities, APIs, state paths
 - Provides LiteLLM proxy configuration (localhost:4000)
 - Model mapping: Haiku -> gpt-5-mini
 - Additive only, no behavior modification
+- Wave B upstream review (2026-03-17): observed head `d0c0d2759f8aadfba1b3361b5860024e4a7e68d4` refines config and skills, but does not justify restoring settings-layer authority over VCO's current compatibility surfaces.
 
 ---
 

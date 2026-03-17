@@ -12,6 +12,17 @@ Primary objective:
 - standardize phase-end hygiene
 - keep routing, packaging, mirror topology, outputs boundary, and installed runtime behavior non-regressed
 
+## Anti-Drift Closure Contract
+
+This closure surface now uses the same anti-proxy-goal-drift vocabulary as requirement, plan, review, retro, and CER artifacts.
+
+For closure reporting:
+
+- state the primary objective and current completion state honestly,
+- record report-only warning codes when wording needed correction,
+- distinguish bounded specialization from generalized completion,
+- treat anti-drift findings as closure-language governance evidence, not as a hidden hard gate.
+
 ## Completed In This Batch
 
 - repaired `phase-end-cleanup.ps1` so it matches the current governance helper contract
@@ -68,6 +79,7 @@ Do **not** claim any of the following based on this batch:
 - “all outputs can now be deleted”
 - “all node zombies were cleaned”
 - “the whole remediation program is complete”
+- “a report-only anti-drift warning automatically fails closure”
 
 ## Honest Conclusion
 

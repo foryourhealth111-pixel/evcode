@@ -44,6 +44,7 @@
 3. Missing `stability_window` or `user_confirmation` means deny write.
 4. Mixed payloads that blur preference and project truth must be downgraded to advisory-only.
 5. Any `security_secret` or `build_truth` signal is a hard reject.
+6. JSON or other structured content inside code fences must be preserved verbatim as `candidate_value` for admission review; extraction failure is not a license to silently drop the payload.
 
 ## Audit envelope
 

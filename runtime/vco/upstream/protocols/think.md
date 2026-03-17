@@ -45,6 +45,20 @@ Closed-loop mode.
 
 In both modes, this protocol must leave execution with a frozen requirement artifact and a plan artifact.
 
+## Anti-Drift Planning Guardrails
+
+Planning is the first place where proxy-goal drift can be prevented cheaply.
+
+When anti-drift policy is active:
+- freeze the primary objective before discussing implementation convenience,
+- name non-objective proxy signals explicitly,
+- keep validation material in a validation role rather than letting examples become the requirement,
+- declare the intended scope and completion state honestly,
+- preserve bounded specialization as a valid outcome when generalization is not yet proven.
+
+This planning guidance is advisory support for better requirement quality.
+It does not create a hidden hard gate beyond the already-approved requirement and plan contracts.
+
 ## Closure-First Preflight (2 Probes + 1 Verify)
 
 Even in planning/research, the primary failure mode is **stalling** (dead-air).

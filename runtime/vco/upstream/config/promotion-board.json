@@ -10,7 +10,10 @@
     "plane_scorecard_required": true,
     "ops_cockpit_required_before_release": true,
     "rollback_drill_required_before_release": true,
-    "runtime_freshness_gate_required": true
+    "runtime_freshness_gate_required": true,
+    "anti_drift_mode": "report_only",
+    "anti_drift_release_summary_required": true,
+    "anti_drift_warning_codes_are_non_blocking_without_independent_failed_gate": true
   },
   "allowed_stages": [
     "off",
@@ -53,7 +56,8 @@
       "script_can_apply": false,
       "scorecard_required": true,
       "replay_required": true,
-      "release_evidence_required": true
+      "release_evidence_required": true,
+      "anti_drift_release_summary_required": true
     }
   },
   "planes": [

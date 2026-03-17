@@ -109,3 +109,14 @@
 推荐统一使用下面这句话解释 catalog 条目：
 
 > 这个条目描述的是一个 **capability slice**，而不是一个新的 runtime surface；它说明了 retained value、适用平面、去冗余关系与淘汰条件。
+
+## 10. 2026-03-17 Discovery Re-Audit Addendum
+
+| Source | Decision | Why |
+|---|---|---|
+| `awesome-vibe-coding` | `admit` | active workflow discovery feed; material-only refresh justified |
+| `vibe-coding-cn` | `admit` | active localized Codex/vibe phrasing and multilingual eval value |
+| `awesome-ai-tools` | `metadata-only` | broad watchlist value remains, but runtime value is too diffuse |
+| `awesome-ai-agents-e2b` | `metadata-only` | stale but still useful as sandbox/eval reference corpus |
+
+All four remain `material_only` with `runtime_surface = none`.

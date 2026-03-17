@@ -27,7 +27,12 @@ function Invoke-CheckScript {
         return Assert-True -Condition $false -Message "[$Name] script exists"
     }
 
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath | Out-Null
+    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } elseif (Get-Command powershell -ErrorAction SilentlyContinue) { 'powershell' } else { $null }
+    if ($null -eq $shell) {
+        return Assert-True -Condition $false -Message "[$Name] pwsh or powershell is available"
+    }
+
+    & $shell -NoProfile -ExecutionPolicy Bypass -File $ScriptPath | Out-Null
     $exitCode = $LASTEXITCODE
     return Assert-True -Condition ($exitCode -eq 0) -Message "[$Name] exit code is 0"
 }
@@ -128,15 +133,20 @@ $deltaJsonPath = Join-Path $outputRoot "delta.json"
 
 $cerCompareScript = Join-Path $verifyRoot "cer-compare.ps1"
 if (Test-Path -LiteralPath $cerCompareScript) {
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $cerCompareScript `
+    $shell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { 'pwsh' } elseif (Get-Command powershell -ErrorAction SilentlyContinue) { 'powershell' } else { $null }
+    if ($null -eq $shell) {
+        $results += Assert-True -Condition $false -Message "[cer-compare] pwsh or powershell is available"
+    } else {
+        & $shell -NoProfile -ExecutionPolicy Bypass -File $cerCompareScript `
         -BaselineCerPath $baselinePath `
         -CurrentCerPath $currentPath `
         -OutputMarkdownPath $deltaMdPath `
         -OutputJsonPath $deltaJsonPath `
         -UpdateCurrentComparison | Out-Null
-    $results += Assert-True -Condition ($LASTEXITCODE -eq 0) -Message "[cer-compare] exit code is 0"
-    $results += Assert-True -Condition (Test-Path -LiteralPath $deltaMdPath) -Message "[cer-compare] markdown output exists"
-    $results += Assert-True -Condition (Test-Path -LiteralPath $deltaJsonPath) -Message "[cer-compare] json output exists"
+        $results += Assert-True -Condition ($LASTEXITCODE -eq 0) -Message "[cer-compare] exit code is 0"
+        $results += Assert-True -Condition (Test-Path -LiteralPath $deltaMdPath) -Message "[cer-compare] markdown output exists"
+        $results += Assert-True -Condition (Test-Path -LiteralPath $deltaJsonPath) -Message "[cer-compare] json output exists"
+    }
 } else {
     $results += Assert-True -Condition $false -Message "[cer-compare] script exists"
 }

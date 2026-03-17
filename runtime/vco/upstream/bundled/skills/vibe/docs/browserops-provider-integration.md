@@ -110,6 +110,16 @@ Wave24 的目标不是把 `browser-use` 作为新的 agent runtime 或新的 orc
 - `confirm_required` 判断
 - 明确的“为什么不走 API / 为什么不走 Playwright”说明
 
+## 5.4 Browser-use operational guidance intake
+
+本轮上游吸收只允许进入 guidance / eval 层，不允许进入 ownership 层：
+
+- 文本查找优先使用 `search_page`，因为它对应开放页面中的文本定位语义。
+- 结构、属性、候选元素枚举优先使用 `find_elements`，而不是把结构探测伪装成全文搜索。
+- 不得假设 `read_long_content` 一定存在；长页面内容必须走 bounded extraction、分页提取，或显式回退到 `playwright` / 人工 SOP。
+- preview model 默认保持 upstream Browser Use system prompt 连续性；若要覆盖，必须留下显式 operator evidence。
+- Vercel gateway、auth、model-surface 漂移只作为 provider-preview evidence 记录，不得被解释为 BrowserOps owner 迁移。
+
 ## 6. 关键资产
 
 - Policy：`config/browserops-provider-policy.json`

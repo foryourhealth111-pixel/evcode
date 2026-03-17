@@ -16,6 +16,15 @@ def read_fixture(name: str) -> str:
     return (FIXTURE_ROOT / name).read_text(encoding="utf-8")
 
 
+def isolated_evcode_env(**overrides: str) -> dict[str, str]:
+    env = dict(os.environ)
+    for key in tuple(env):
+        if key.startswith("EVCODE_") and key not in {"EVCODE_MODE", "EVCODE_RUN_ID"}:
+            env.pop(key, None)
+    env.update(overrides)
+    return env
+
+
 class HookTests(unittest.TestCase):
     def test_user_prompt_submit_emits_governed_context(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -34,7 +43,7 @@ class HookTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 check=True,
-                env={**os.environ, "EVCODE_MODE": "benchmark_autonomous"},
+                env=isolated_evcode_env(EVCODE_MODE="benchmark_autonomous"),
             )
         payload = json.loads(completed.stdout)
         self.assertTrue(payload["continue"])
@@ -70,7 +79,7 @@ class HookTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 check=True,
-                env={**os.environ, "EVCODE_RUN_ID": "stop-hook-test"},
+                env=isolated_evcode_env(EVCODE_RUN_ID="stop-hook-test"),
             )
             payload = json.loads(completed.stdout)
             cleanup_receipt = Path(tempdir) / "outputs" / "runtime" / "vibe-sessions" / "fixture-session" / "hook-stop-cleanup.json"
@@ -88,6 +97,7 @@ class HookTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 check=True,
+                env=isolated_evcode_env(),
             )
             payload = json.loads(completed.stdout)
             receipt_path = Path(tempdir) / "outputs" / "runtime" / "vibe-sessions" / "fixture-session" / "task-completed-hook.json"

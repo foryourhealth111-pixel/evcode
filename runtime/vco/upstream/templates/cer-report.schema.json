@@ -8,6 +8,7 @@
     "report_id",
     "date",
     "task",
+    "objective_protection",
     "trigger_signals",
     "findings",
     "actions",
@@ -57,6 +58,108 @@
             "research",
             "retro"
           ]
+        }
+      }
+    },
+    "objective_protection": {
+      "type": "object",
+      "required": [
+        "governance_mode",
+        "anti_proxy_goal_drift_tier",
+        "completion_state",
+        "abstraction_layer_target",
+        "primary_objective",
+        "non_objective_proxy_signals",
+        "validation_material_role",
+        "intended_scope",
+        "specialization_assessment",
+        "generalization_evidence_bundle",
+        "report_only_warning_codes",
+        "completion_honesty_notes"
+      ],
+      "properties": {
+        "governance_mode": {
+          "type": "string",
+          "enum": [
+            "report_only"
+          ]
+        },
+        "anti_proxy_goal_drift_tier": {
+          "type": "string",
+          "enum": [
+            "Tier A",
+            "Tier B",
+            "Tier C"
+          ]
+        },
+        "completion_state": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial",
+            "scenario-scoped",
+            "blocked",
+            "not-yet-generalized"
+          ]
+        },
+        "abstraction_layer_target": {
+          "type": "string",
+          "enum": [
+            "symptom",
+            "adapter",
+            "mechanism",
+            "abstraction",
+            "governance"
+          ]
+        },
+        "primary_objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "non_objective_proxy_signals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "validation_material_role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intended_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "specialization_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generalization_evidence_bundle": {
+          "type": "object",
+          "required": [
+            "required_case_count",
+            "notes"
+          ],
+          "properties": {
+            "required_case_count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "notes": {
+              "type": "string"
+            }
+          }
+        },
+        "report_only_warning_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "completion_honesty_notes": {
+          "type": "string",
+          "minLength": 1
         }
       }
     },

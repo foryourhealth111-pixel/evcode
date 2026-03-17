@@ -45,6 +45,21 @@ All spawned subagent prompts must end with `$vibe` so the governed runtime remai
 | Session persistence (optional) | ruflo | `session_save`, `session_restore` |
 | Consensus algorithms (optional) | ruflo | `hive-mind_consensus` |
 
+## Anti-Drift Handoff Contract
+
+Every XL subtask handoff should preserve:
+
+- the primary objective,
+- the declared scope,
+- the current completion-state target,
+- any report-only anti-drift warnings already known,
+- whether the work is a bounded specialization or a generalized capability claim.
+
+Lead-agent rules:
+- subagents may surface report-only warnings, but must not invent a new hard gate,
+- if an existing approved policy or failed gate truly blocks progress, cite that exact surface,
+- aggregation must not flatten bounded-specialization outputs into generalized completion claims.
+
 ## Orchestration Options
 
 ### Option A: Codex Native Team + ruflo Collaboration (Preferred)

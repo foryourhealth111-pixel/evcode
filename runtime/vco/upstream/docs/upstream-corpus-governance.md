@@ -20,9 +20,9 @@ Wave34 把 `third_party/vco-ecosystem-mirror` 的 15 个镜像来源纳入 **ups
 - `docs/upstream-source-alias-governance.md`：别名治理与 intake 规范；
 - `references/upstream-value-ledger.md`：逐项价值与 next action 账本；
 - `references/upstream-reaudit-matrix-v2.md`：remaining value / ceiling / no-go 矩阵；
-- `scripts/governance/audit-upstream.ps1`：统一审计与摘要导出；
+- `scripts/governance/audit-upstream.ps1`：辅助审计与摘要导出，只提供证据，不授予自动升级权；
 - `scripts/verify/vibe-upstream-corpus-manifest-gate.ps1`：结构 / 字段 / alias / canonical slug gate；
-- `scripts/verify/vibe-upstream-mirror-freshness-gate.ps1`：镜像完整度与 HEAD 对齐 gate。
+- `scripts/verify/vibe-upstream-mirror-freshness-gate.ps1`：镜像完整度与 HEAD 对齐 gate，仅作为辅助证据。
 
 ## Manifest Structure
 
@@ -100,10 +100,10 @@ Wave34 把 `third_party/vco-ecosystem-mirror` 的 15 个镜像来源纳入 **ups
 建议顺序：
 
 1. 更新 `config/upstream-source-aliases.json` 与 `config/upstream-corpus-manifest.json`；
-2. 运行 `pwsh -File .\scripts\governance\audit-upstream.ps1 -WriteJson`；
+2. 运行 `pwsh -File .\scripts\governance\audit-upstream.ps1 -WriteJson`，生成辅助审计证据；
 3. 运行 `pwsh -File .\scripts\verify\vibe-upstream-corpus-manifest-gate.ps1 -WriteArtifacts`；
 4. 运行 `pwsh -File .\scripts\verify\vibe-upstream-mirror-freshness-gate.ps1 -WriteArtifacts`；
-5. 如果 upstream HEAD、lane / status、或 canonical slug mapping 有变化，再同步更新 `references/upstream-value-ledger.md` 与 `references/upstream-reaudit-matrix-v2.md`。
+5. 先进行 manual upstream-by-upstream intake 判断；只有判断完成后，才更新 `references/upstream-value-ledger.md` 与 `references/upstream-reaudit-matrix-v2.md`。
 
 ## Operator Rules
 

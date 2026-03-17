@@ -26,19 +26,6 @@ function Add-Assertion {
     })
 }
 
-function Resolve-ManifestPath {
-    param(
-        [string]$RepoRoot,
-        [string]$PathValue
-    )
-
-    if ([System.IO.Path]::IsPathRooted($PathValue)) {
-        return [System.IO.Path]::GetFullPath($PathValue)
-    }
-
-    return [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $PathValue))
-}
-
 function Get-HeadSha {
     param([string]$RepoDir)
 
@@ -137,7 +124,7 @@ $requiredRootPassCount = 0
 
 foreach ($root in $roots) {
     $rootId = [string]$root.id
-    $resolvedPath = Resolve-ManifestPath -RepoRoot $repoRoot -PathValue ([string]$root.path)
+    $resolvedPath = Resolve-VgoPathSpec -PathSpec ([string]$root.path) -RepoRoot $repoRoot
     $rootExists = Test-Path -LiteralPath $resolvedPath
     $required = [bool]$root.required_for_freshness_gate
 

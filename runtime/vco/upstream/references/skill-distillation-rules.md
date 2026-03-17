@@ -80,6 +80,12 @@
 - 允许进入 governance / reference；
 - 默认不直接进入 runtime 推荐链。
 
+像 `awesome-claude-skills-composio` 这类“curated root + massive automation subtree”型上游：
+
+- 优先抽取根目录下可复用的 skill schema / checklist / packaging 约束；
+- 明确把 connector automation 子树视为隔离区；
+- 没有 canonical admission 之前，不得让外部 surface 借 catalog 体量获得事实 owner 地位。
+
 ## 7. 明确拒绝条件
 
 出现以下任一情况，直接 `reject`：
@@ -108,3 +114,9 @@
 推荐使用以下一句话描述任何 distillation 结果：
 
 > 这不是把上游原样纳入 runtime，而是把其中可复用、可验证、可去冗余的剩余价值映射到现有 canonical owner。
+
+## 10. 2026-03-17 Re-Audit Addendum
+
+- `claude-skills`：继续作为 skill quality / schema / validation 刷新源。
+- `antigravity-awesome-skills`：继续作为 taxonomy coverage 证据，不进入默认推荐链。
+- `awesome-claude-skills-composio`：只吸收 curated root 的规则价值；对 connector automation subtree 保持 quarantine posture。

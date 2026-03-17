@@ -37,6 +37,17 @@ The job here is to execute, verify, and hand off cleanly to `phase_cleanup`.
 - must record assumption-driven decisions and execution receipts
 - must not silently widen scope beyond the frozen requirement contract
 
+## Anti-Drift Execution Guardrails
+
+During execution:
+- do not optimize a visible proxy signal while quietly abandoning the frozen objective,
+- do not absorb validation material, sample text, or current failing examples into product truth without explicit approval,
+- do not relabel a bounded fix as generalized completion unless the proof bundle supports that claim,
+- do preserve valid specialization when the requirement or plan intentionally scoped the work that way.
+
+These are execution guardrails and completion-language rules.
+They are not a standalone blocking layer beyond the approved requirement, plan, and existing hard gates.
+
 ## Scope
 Activated when the task requires writing or modifying code:
 - Feature implementation

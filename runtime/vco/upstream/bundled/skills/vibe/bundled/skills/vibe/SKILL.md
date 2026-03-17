@@ -89,6 +89,12 @@ User-facing behavior stays the same regardless of host syntax:
 - one XL-style plan surface
 - one execution and cleanup contract
 
+Compatibility notes for downstream verification and host adapters:
+
+- `M=single-agent`
+- `L grade always follows: design → plan → user approval → subagent execution → two-stage review.`
+- XL native lifecycle APIs remain `spawn_agent`/`send_input`/`wait`/`close_agent`
+
 ## Stage Contract
 
 ### 1. `skeleton_check`
@@ -157,7 +163,7 @@ It consumes the canonical route, confirm, unattended, and overlay surfaces and t
 Rules:
 
 - explicit user tool choice still overrides routing
-- `confirm_required` still uses the existing white-box confirmation surface
+- `confirm_required` still uses the existing white-box `user_confirm interface`
 - unattended behavior is mapped into governed runtime mode, not into a separate control plane
 - provider-backed intelligence may advise but must not replace route authority
 
@@ -172,11 +178,18 @@ Read these protocols on demand:
 - `protocols/team.md`: XL multi-agent orchestration
 - `protocols/retro.md`: retrospective and learning capture
 
+## Learn And Retro Surface
+
+For LEARN / retrospective work, use the `Context Retro Advisor` vocabulary from `protocols/retro.md`.
+
+- retro outputs should preserve `CER format` artifacts when that protocol is invoked
+- completion-language corrections remain governed and evidence-backed
+
 ## Memory Rules
 
 Memory remains runtime-neutral:
 
-- `state_store`: default session memory
+- `state_store (runtime-neutral)`: default session memory
 - Serena: explicit decisions only
 - ruflo: optional short-horizon vector memory
 - Cognee: optional long-horizon graph memory

@@ -26,4 +26,4 @@ Wave121 extends the matrix from the original mirror-focused set to **19 canonica
 - No lane or status may be widened without explicit board review.
 - No alias may replace the canonical slug inside the matrix.
 
-Validation is performed by `scripts/verify/vibe-upstream-reaudit-matrix-gate.ps1`.
+Validation is performed by `scripts/verify/vibe-upstream-reaudit-matrix-gate.ps1`, but the validation contract is evidence-oriented and must tolerate human-readable heading/casing differences so long as the matrix schema and governance meaning remain intact.

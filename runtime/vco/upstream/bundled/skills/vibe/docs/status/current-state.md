@@ -63,6 +63,18 @@ Interpretation:
 - `nested_bundled` 现在应被视为 optional compatibility topology surface，而不是必须常驻的物理 payload。
 - `outputs/**` 继续承担 evidence 职责；这里不再重复抄写每个 gate 的详细结果。
 
+## Anti-Drift Observability Snapshot
+
+This page is not the anti-drift source of truth.
+It is only the live status surface that tells operators whether completion-honesty evidence is present.
+
+Current rule:
+
+- anti-drift remains `report_only`,
+- authoritative wording lives in requirement / plan / review / retro / CER / closure artifacts,
+- status surfaces should summarize whether those artifacts exist and whether report-only warnings were emitted,
+- status surfaces must not convert report-only warnings into hidden release or execution failure.
+
 ## Proof Surface
 
 当前 closure batch 的核心 proof surface 由以下 gate receipts组成：
@@ -88,6 +100,9 @@ Interpretation:
 
 3. phase-end hygiene 必须持续 attribution-safe。
    - 最新 node/process 审计显示 `cleanup_candidate_count = 0`，所以本轮只能继续使用 report-only cleanup，而不是误杀外部 Node 进程。
+
+4. anti-drift observability still depends on artifact discipline.
+   - 如果 requirement / plan / review / CER / closure surface 没有诚实记录 completion state，`current-state` 也不能替它捏造 green summary。
 
 ## Current Closure Focus
 

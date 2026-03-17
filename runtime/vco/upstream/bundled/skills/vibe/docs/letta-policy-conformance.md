@@ -54,6 +54,11 @@ Letta 只能解释 memory blocks，不能重写 owner：
 - No autonomous route reassignment
 - No memory truth-source transfer
 
+## 4.1 Current upstream re-audit note
+
+The currently reviewed upstream delta can advance security or release hygiene without changing the absorbed policy vocabulary.
+Such drift updates the observed upstream head, but does not justify expanding Letta beyond `contract-source-only`.
+
 ## 5. Failure semantics
 
 若 conformance 失败，必须执行以下动作：

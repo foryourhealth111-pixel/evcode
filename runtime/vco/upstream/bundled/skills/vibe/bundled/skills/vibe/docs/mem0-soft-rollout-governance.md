@@ -47,6 +47,8 @@ soft rollout 允许写入时，必须同时具备：
 - `evaluation_id`
 - `fallback_owner`
 
+若候选 payload 来自 code fence 中的 JSON 或其他结构化块，admission pipeline 必须保留原始 `candidate_value` 供审计，不得先做“提取失败即丢弃”的静默降损。
+
 ### 3.4 audit and rollback
 
 每次 soft write 都必须留下 audit 痕迹，并且能通过 kill switch 立即停写。
@@ -59,6 +61,12 @@ soft rollout 允许写入时，必须同时具备：
 | `style_hint` | 重复输出风格偏好 | opt-in + audit |
 | `recurring_constraint` | 稳定个人约束 | explicit confirmation |
 | `output_preference` | 结构化输出格式偏好 | fallback owner 明确 |
+
+## 4.1 Backend portability notes
+
+- OpenAI-compatible embedder 的 `baseURL` 可以作为 `mem0` 的可选 backend compatibility 字段存在，但只属于 backend portability，不改变 Memory Runtime owner boundary。
+- SQLite 落盘路径必须是 operator-controlled durable path；禁止把当前工作目录是否可写当作默认前提。
+- 结构化 payload 的 fidelity 优先于便利性；code fence 内的内容如被分类为 preference candidate，必须在 admission 审核中原样可见。
 
 ## 5. Kill switch / rollback
 

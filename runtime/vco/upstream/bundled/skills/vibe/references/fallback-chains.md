@@ -138,6 +138,7 @@ Notes:
 - `open` engine is optional and depends on external `ralph` CLI availability.
 - `compat` engine is always the stability baseline inside VCO.
 - `cancel-ralph` only affects `compat` engine local state.
+- Wave B upstream review (2026-03-17): latest upstream fixes reduce false exit / quota-exhaustion behavior in the optional open backend, but do not change fallback order or compat-baseline policy.
 
 ## Memory System Fallbacks
 

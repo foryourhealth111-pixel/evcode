@@ -137,7 +137,8 @@ $expectedUpstreams = @(
     "claude-skills",
     "awesome-agent-skills",
     "awesome-claude-code-subagents",
-    "antigravity-awesome-skills"
+    "antigravity-awesome-skills",
+    "awesome-claude-skills-composio"
 )
 $requiredTopKeys = @(
     "schema_version",
@@ -240,7 +241,8 @@ foreach ($phrase in @(
     "claude-skills",
     "awesome-agent-skills",
     "awesome-claude-code-subagents",
-    "antigravity-awesome-skills"
+    "antigravity-awesome-skills",
+    "awesome-claude-skills-composio"
 )) {
     Add-Assertion -Results ([ref]$results) -Condition ($roleDoc -match [regex]::Escape($phrase)) -Message ("role governance doc mentions: {0}" -f $phrase)
 }

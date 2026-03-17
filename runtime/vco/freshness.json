@@ -1,8 +1,8 @@
 {
-  "version": 1,
-  "updated_at": "2026-03-15",
+  "version": "2.3.47",
+  "updated_at": "2026-03-18",
   "source": "foryourhealth111-pixel/vco-skills-codex",
   "version_target": "2.3.47",
-  "commit": "9cbd7416615046798a6d3fabcdbf89dd219761c7",
+  "commit": "241a98d58e066a653c8bac136af3a2ad0e510e45",
   "materialized_subdir": "upstream"
 }

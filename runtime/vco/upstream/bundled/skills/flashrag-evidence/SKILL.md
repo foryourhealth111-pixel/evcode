@@ -39,8 +39,7 @@ This skill is **not** a replacement for GitNexus (code dependency graph) or web 
 
    - Preflight (checks vendoring + env; does NOT read secrets):
      - `pwsh C:\Users\羽裳\.codex\skills\vibe\scripts\ruc-nlpir\preflight.ps1`
-   - Install minimal deps into the isolated vendored venv:
-     - `pwsh C:\Users\羽裳\.codex\skills\vibe\scripts\ruc-nlpir\install-upstreams.ps1 -Profile minimal`
+   - Manually create an isolated venv for the vendored runtime and install only the minimal packages you need. The old `install-upstreams.ps1` auto-install path has been removed on purpose.
    - Use bm25s engine:
      - `C:\Users\羽裳\.codex\_external\ruc-nlpir\.venv\Scripts\python.exe C:\Users\羽裳\.codex\skills\flashrag-evidence\scripts\flashrag_evidence.py --engine bm25s --query "…" --topk 8`
 

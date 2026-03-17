@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated": "2026-03-07",
+  "updated": "2026-03-17",
   "policy": {
     "purpose": "Distill upstream role, subagent, and skill ecosystems into VCO-native role-pack, team-template seed, and skill-governance assets without creating a second runtime surface.",
     "default_stage": "shadow",
@@ -37,7 +37,13 @@
       "canonical_targets": [
         "references/team-templates.md",
         "config/role-pack-policy.json"
-      ]
+      ],
+      "observed_head_sha": "8048bcf308fcc5f5768a9c2d4c3f139b0e81f4e6",
+      "reviewed_at": "2026-03-17",
+      "decision_class": "admit",
+      "admission_scope": "pattern-refresh-only",
+      "packet_memo": "docs/role-pack-upstream-delta-2026-03-17.md",
+      "next_action": "Refresh scatter/gather and bounded handoff language without opening a second orchestrator lane."
     },
     {
       "id": "claude-skills",
@@ -55,7 +61,13 @@
       "canonical_targets": [
         "references/skill-distillation-rules.md",
         "config/role-pack-policy.json"
-      ]
+      ],
+      "observed_head_sha": "3bf9a24b76a7c122f1fc05e83929fbc84e1c207a",
+      "reviewed_at": "2026-03-17",
+      "decision_class": "admit",
+      "admission_scope": "skill-distillation-rule-refresh-only",
+      "packet_memo": "docs/role-pack-upstream-delta-2026-03-17.md",
+      "next_action": "Refresh skill schema, validation, and quality rules without opening a second skill runtime."
     },
     {
       "id": "awesome-agent-skills",
@@ -73,7 +85,13 @@
       "canonical_targets": [
         "config/role-pack-policy.json",
         "references/skill-distillation-rules.md"
-      ]
+      ],
+      "observed_head_sha": "9f1edf3d13cc340bf4f62308c8922dad8c9a0a82",
+      "reviewed_at": "2026-03-17",
+      "decision_class": "admit",
+      "admission_scope": "role-card-overlay-only",
+      "packet_memo": "docs/role-pack-upstream-delta-2026-03-17.md",
+      "next_action": "Continue harvesting role-card coverage and problem-shape taxonomy without bulk runtime ingestion."
     },
     {
       "id": "awesome-claude-code-subagents",
@@ -91,7 +109,13 @@
       "canonical_targets": [
         "references/team-templates.md",
         "config/role-pack-policy.json"
-      ]
+      ],
+      "observed_head_sha": "87321636a1c666283d8f17398b45c2644395044b",
+      "reviewed_at": "2026-03-17",
+      "decision_class": "admit",
+      "admission_scope": "team-template-and-review-archetype-refresh-only",
+      "packet_memo": "docs/role-pack-upstream-delta-2026-03-17.md",
+      "next_action": "Refresh reviewer and specialist archetypes only; keep VCO templates as the sole execution owner."
     },
     {
       "id": "antigravity-awesome-skills",
@@ -109,7 +133,38 @@
       "canonical_targets": [
         "references/skill-distillation-rules.md",
         "config/role-pack-policy.json"
-      ]
+      ],
+      "observed_head_sha": "883c81609a76d6d70a19068194a632a599de089f",
+      "reviewed_at": "2026-03-17",
+      "decision_class": "metadata-only",
+      "admission_scope": "taxonomy-and-quality-evidence-only",
+      "packet_memo": "docs/role-pack-upstream-delta-2026-03-17.md",
+      "next_action": "Use release-scale catalog drift as taxonomy evidence only; do not let marketplace breadth become runtime authority."
+    },
+    {
+      "id": "awesome-claude-skills-composio",
+      "category": "connector-aware-skill-catalog",
+      "preferred_landing": "skill_distillation_rule",
+      "retained_value": [
+        "curated root skill packaging heuristics",
+        "catalog quarantine boundary for external automation subtrees",
+        "connector-aware skill distillation constraints"
+      ],
+      "forbidden_imports": [
+        "connector automation subtree as runtime surface",
+        "external catalog becoming default skill authority"
+      ],
+      "canonical_targets": [
+        "references/skill-distillation-rules.md",
+        "config/role-pack-policy.json",
+        "docs/role-pack-distillation-governance.md"
+      ],
+      "observed_head_sha": "27904475d1270d8395acf07691966267d5abda2d",
+      "reviewed_at": "2026-03-17",
+      "decision_class": "admit",
+      "admission_scope": "curated-root-and-catalog-quarantine-rule-only",
+      "packet_memo": "docs/role-pack-upstream-delta-2026-03-17.md",
+      "next_action": "Use the restored curated root as distillation evidence and keep the composio automation subtree quarantined behind connector governance."
     }
   ],
   "role_packs": [
@@ -345,7 +400,8 @@
       ],
       "source_upstreams": [
         "awesome-agent-skills",
-        "antigravity-awesome-skills"
+        "antigravity-awesome-skills",
+        "awesome-claude-skills-composio"
       ],
       "problem_shapes": [
         "domain expert injection",
@@ -470,6 +526,11 @@
         "source_id": "antigravity-awesome-skills",
         "canonical_use": "taxonomy coverage and domain examples",
         "landing": "reference_case_only"
+      },
+      {
+        "source_id": "awesome-claude-skills-composio",
+        "canonical_use": "curated root skill packaging rules plus automation subtree quarantine",
+        "landing": "skill_distillation_rule"
       }
     ]
   }

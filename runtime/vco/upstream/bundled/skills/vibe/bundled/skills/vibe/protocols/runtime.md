@@ -87,6 +87,7 @@ Rules:
 - write under `docs/requirements/`
 - execution and review trace back to this document
 - benchmark mode must record inferred assumptions
+- when the canonical anti-proxy-goal-drift policy is active, governed requirement packets must carry its declared objective, proxy-signal, scope, abstraction, completion, and evidence fields
 
 ### Stage 4: `xl_plan`
 
@@ -102,6 +103,7 @@ Required contents:
 - verification commands
 - rollback strategy
 - cleanup expectations
+- when the canonical anti-proxy-goal-drift policy is active, governed plans must include the anti-drift control surface used by the canonical template
 
 ### Stage 5: `plan_execute`
 
@@ -170,5 +172,6 @@ The governed runtime is considered healthy only when:
 - execution traces back to the plan
 - cleanup is recorded
 - no success claim is made without verification evidence
+- anti-proxy-goal-drift completion semantics are not silently bypassed in governed packets
 - no fallback or degraded path is presented as equivalent success
 - any fallback or degraded path emits a standalone hazard alert

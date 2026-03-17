@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-03-15",
+  "updated_at": "2026-03-17",
   "enabled": true,
   "root": "docs/requirements",
   "template_path": "templates/requirements/governed-requirement-template.md",
@@ -11,6 +11,14 @@
     "Deliverable",
     "Constraints",
     "Acceptance Criteria",
+    "Primary Objective",
+    "Non-Objective Proxy Signals",
+    "Validation Material Role",
+    "Anti-Proxy-Goal-Drift Tier",
+    "Intended Scope",
+    "Abstraction Layer Target",
+    "Completion State",
+    "Generalization Evidence Bundle",
     "Non-Goals",
     "Autonomy Mode",
     "Assumptions",
@@ -26,6 +34,16 @@
       "non_goals",
       "autonomy_mode",
       "assumptions"
+    ],
+    "anti_proxy_goal_drift_fields": [
+      "primary_objective",
+      "non_objective_proxy_signals",
+      "validation_material_role",
+      "anti_proxy_goal_drift_tier",
+      "intended_scope",
+      "abstraction_layer_target",
+      "completion_state",
+      "generalization_evidence_bundle"
     ]
   }
 }

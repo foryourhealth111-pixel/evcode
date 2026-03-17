@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.2.0",
   "report_id": "{{report_id}}",
   "date": "{{date}}",
   "task": {
@@ -7,6 +7,25 @@
     "topic": "{{topic}}",
     "grade": "{{grade}}",
     "task_type": "{{task_type}}"
+  },
+  "objective_protection": {
+    "governance_mode": "report_only",
+    "anti_proxy_goal_drift_tier": "{{anti_proxy_goal_drift_tier}}",
+    "completion_state": "{{completion_state}}",
+    "abstraction_layer_target": "{{abstraction_layer_target}}",
+    "primary_objective": "{{primary_objective}}",
+    "non_objective_proxy_signals": [
+      "{{proxy_signal_1}}"
+    ],
+    "validation_material_role": "{{validation_material_role}}",
+    "intended_scope": "{{intended_scope}}",
+    "specialization_assessment": "{{specialization_assessment}}",
+    "generalization_evidence_bundle": {
+      "required_case_count": 0,
+      "notes": "{{generalization_evidence_bundle}}"
+    },
+    "report_only_warning_codes": [],
+    "completion_honesty_notes": "{{completion_honesty_notes}}"
   },
   "trigger_signals": {
     "retry_count_10m": 0,

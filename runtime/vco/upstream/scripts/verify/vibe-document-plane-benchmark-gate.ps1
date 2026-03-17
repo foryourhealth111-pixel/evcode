@@ -72,12 +72,14 @@ param(
     [pscustomobject]@{ path = 'docs/document-plane-benchmark-governance.md'; keywords = @(
     'golden corpus',
     'benchmark',
-    'fallback'
+    'fallback',
+    'extensionless OOXML'
 ) },
     [pscustomobject]@{ path = 'references/document-golden-corpus.md'; keywords = @(
     'born-digital PDF',
     'OCR-heavy PDF',
-    'DOCX with comments'
+    'DOCX with comments',
+    'extensionless OOXML attachment'
 ) }
 )
     foreach ($check in $keywordChecks) {

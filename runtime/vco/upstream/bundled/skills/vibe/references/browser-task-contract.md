@@ -49,6 +49,7 @@
 - `mode`
 - `control_plane_owner`
 - `considered`
+- `provider_preview_note`
 
 ## 5. 风险抬升规则
 
@@ -71,6 +72,13 @@
 5. 任一 provider 建议都必须带 `fallback_provider`。
 6. `browser-use` 与 `turix-cua` 默认带 `confirm_required` 偏置。
 
+## 6.1 Browser-use bounded guidance
+
+- 当任务目标是页面内文本定位时，优先使用 `search_page`。
+- 当任务目标是元素结构、属性、选择器候选或节点枚举时，优先使用 `find_elements`。
+- 合同层不得依赖 `read_long_content` 作为必备能力；长内容读取必须声明 `bounded extraction` 或 `fallback_provider`。
+- preview-model prompt continuity 与 gateway/auth drift 只记录为 `provider_preview_note`，不改变 BrowserOps owner。
+
 ## 7. 最小验证产物
 
 当 BrowserOps 建议被采纳时，执行侧至少应保留一种验证产物：
@@ -80,3 +88,4 @@
 - 控制台 / 网络面板证据
 - 最终 DOM / 文本提取结果
 - 失败时的 fallback 记录
+- provider preview note（如存在 gateway/auth/model drift）

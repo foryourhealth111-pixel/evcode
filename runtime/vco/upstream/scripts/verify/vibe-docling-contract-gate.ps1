@@ -59,11 +59,11 @@ foreach ($field in $requiredFields) {
     $results.Add((Assert-Collect -Condition (@($policy.required_output_fields) -contains $field) -Message ('required_output_fields 包含 {0}' -f $field))) | Out-Null
 }
 
-$specKeywords = @('Docling Output Spec', 'approved-template', 'project-enabled', 'artifact_bundle', 'markdown_plus_pages', 'text_plus_provenance', 'page_ocr_only', 'failure_object', 'document_plane_primary')
+$specKeywords = @('Docling Output Spec', 'approved-template', 'project-enabled', 'artifact_bundle', 'markdown_plus_pages', 'text_plus_provenance', 'page_ocr_only', 'failure_object', 'document_plane_primary', 'Office Open XML', 'application/zip')
 foreach ($keyword in $specKeywords) {
     $results.Add((Assert-Collect -Condition ($specText.Contains($keyword)) -Message ('spec 包含关键词 {0}' -f $keyword))) | Out-Null
 }
-$docKeywords = @('artifact-first', 'isolated-runtime', 'second document orchestrator', 'approved-template', 'project-enabled')
+$docKeywords = @('artifact-first', 'isolated-runtime', 'second document orchestrator', 'approved-template', 'project-enabled', 'ZIP 容器内容检查')
 foreach ($keyword in $docKeywords) {
     $results.Add((Assert-Collect -Condition ($docText.Contains($keyword)) -Message ('integration 文档包含关键词 {0}' -f $keyword))) | Out-Null
 }

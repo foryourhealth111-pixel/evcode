@@ -18,7 +18,7 @@ It answers three questions:
 ### Batch Receipts
 
 - [`operator-dry-run.md`](operator-dry-run.md): latest operator replay for the active wrapper or closure batch
-- [`closure-audit.md`](closure-audit.md): current closure-batch completion surface, remaining gaps, and no-overclaim notes
+- [`closure-audit.md`](closure-audit.md): current closure-batch completion surface, remaining gaps, no-overclaim notes, and report-only completion-honesty language
 
 ### Guardrails / Proof / Transitional Baselines
 
@@ -44,6 +44,7 @@ It answers three questions:
 
 - `current-state.md` is the only live summary page in `docs/status/`; any PASS / FAIL or numeric claim must point back to `outputs/verify/**` or an operator receipt
 - `operator-dry-run.md` and `closure-audit.md` are batch receipts; keep only the latest trustworthy, reviewable version
+- closure reporting must preserve honest objective / scope / completion wording; anti-drift report-only warnings correct language but do not silently become hard enforcement
 - supporting baselines may act only as guardrails, proof contracts, or transitional blocker maps; when content becomes a stable long-term contract, move it back to root `docs/` or `references/`
 - dated baselines such as `repo-cleanliness-baseline.md` must be clearly distinguished from current state; the latest gate receipt remains authoritative
 - historical closure reports and batch reports stay under [`../plans/README.md`](../plans/README.md), not here

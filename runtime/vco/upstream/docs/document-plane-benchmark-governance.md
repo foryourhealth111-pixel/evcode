@@ -12,6 +12,8 @@ golden corpus 至少覆盖：
 - scanned PDF / OCR-heavy PDF
 - docx with comments / formatting
 - mixed tables / images / multi-page provenance cases
+- extensionless OOXML / ZIP-carried Office attachments
+- table-structure sensitive cases（merged cells / OCR-cell interaction / warnings preservation）
 
 ## Benchmark Rules
 
@@ -21,3 +23,4 @@ golden corpus 至少覆盖：
 - required fields
 - degraded tolerance
 - failure trigger
+- whether MIME recovery is expected before normalization
