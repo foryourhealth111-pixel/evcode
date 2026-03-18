@@ -1,0 +1,43 @@
+{
+  "task": "fallback behavior assessment wave4",
+  "generated_at": "2026-03-18T13:16:05Z",
+  "status": "functional_fallback_verified",
+  "requirement_doc": "docs/requirements/2026-03-18-fallback-behavior-assessment-wave4.md",
+  "execution_plan": "docs/plans/2026-03-18-fallback-behavior-assessment-wave4-execution-plan.md",
+  "route_kind": "codex_with_specialists",
+  "requested_specialists": [
+    "claude"
+  ],
+  "specialist_results": {
+    "claude": {
+      "status": "provider_failure",
+      "recommended_next_actor": "codex",
+      "unresolved_risks": [
+        "provider_http_error:403:{\"error\":{\"message\":\"openai_error\",\"type\":\"bad_response_status_code\",\"param\":\"\",\"code\":\"bad_response_status_code\"}}"
+      ]
+    }
+  },
+  "codex_integration_receipt": {
+    "run_id": "fallback-assessment-fresh",
+    "final_executor": "codex",
+    "route_kind": "codex_with_specialists",
+    "requested_specialists": [
+      "claude"
+    ],
+    "active_specialists": [
+      "claude"
+    ],
+    "degraded_specialists": [],
+    "suppressed_specialists": [
+      "gemini"
+    ],
+    "generated_at": "2026-03-18T13:14:51Z"
+  },
+  "functional_fallback_ok": true,
+  "telemetry_gap_detected": true,
+  "notes": [
+    "Claude failed with provider_http_error:403 and the specialist result explicitly recommended Codex as next actor.",
+    "Codex remained the final executor in the integration receipt.",
+    "The runtime summary kept degraded_delegates empty even though Claude ended in provider_failure; this is a bookkeeping/observability gap, not a takeover failure."
+  ]
+}

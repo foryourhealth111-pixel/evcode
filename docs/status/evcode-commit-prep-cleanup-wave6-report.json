@@ -1,0 +1,38 @@
+{
+  "run_id": "2026-03-18-evcode-commit-prep-cleanup-wave6",
+  "status": "pass",
+  "verification": {
+    "targeted_pytest": {
+      "command": "python3 -m pytest tests/test_app_entrypoints.py tests/test_runtime_bridge.py tests/test_specialist_routing.py -q",
+      "result": "19 passed in 0.97s"
+    },
+    "check_contracts": {
+      "command": "python3 scripts/verify/check_contracts.py",
+      "result": "contract checks: ok"
+    },
+    "full_check": {
+      "command": "npm run check",
+      "result": "pass",
+      "details": [
+        "proof doc checks: ok",
+        "distribution assembly checks: ok",
+        "hybrid baseline: pass",
+        "distribution portability: pass",
+        "68 tests in 10.964s: OK"
+      ]
+    }
+  },
+  "cleanup": {
+    "pyc_remaining": 0,
+    "cache_dirs_remaining": 0
+  },
+  "git_scope": {
+    "modified_entries": 20,
+    "untracked_entries": 89
+  },
+  "notes": [
+    "GitHub auth experiment docs were removed from commit scope.",
+    "Node processes were audited only; no external process cleanup was attempted.",
+    "Claude live provider remains externally unstable on RightCodes and is handled via visible degraded fallback."
+  ]
+}

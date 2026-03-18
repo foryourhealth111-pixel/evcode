@@ -50,6 +50,18 @@ class AppEntrypointTests(unittest.TestCase):
             "config/submission-presets/rightcode-gpt-5.4-xhigh.json",
             payload["default_submission_preset"],
         )
+        self.assertEqual("core_benchmark", payload["baseline_family"])
+        self.assertEqual("config/baseline-families.json", payload["baseline_families_config"])
+        self.assertEqual("config/assistant-policy.benchmark.json", payload["assistant_policy"])
+        self.assertEqual("config/specialist-routing.json", payload["specialist_routing"])
+        self.assertEqual("codex_primary_benchmark", payload["specialist_rollout_phase"])
+        self.assertEqual("core_benchmark", payload["baseline_surface"]["family"])
+        self.assertIn("codex", payload["assistants"])
+        self.assertEqual("config/assistant-providers.env.local", payload["provider_setup"]["local_env_path"])
+        self.assertEqual("docs/configuration/openai-compatible-provider-setup.md", payload["provider_setup"]["setup_doc_path"])
+        self.assertEqual("chat_completions", payload["assistant_api_compatibility"]["primary_wire_api"])
+        self.assertEqual("vco_artifacts", payload["governance_surface"]["persistent_memory_owner"])
+        self.assertIn("codex_only", payload["governance_surface"]["capability_classes"])
 
     def test_standard_entrypoint_passthrough_launches_native_host(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -104,8 +116,144 @@ requires_openai_auth = true
         self.assertEqual("standard", payload["channel"])
         self.assertIn("bundled_host_available", payload)
         self.assertIn("source_codex_home", payload)
+        self.assertEqual("config/assistant-policy.standard.json", payload["assistant_policy"])
+        self.assertEqual("config/specialist-routing.json", payload["specialist_routing"])
+        self.assertEqual("hybrid_governed", payload["baseline_family"])
+        self.assertEqual("config/baseline-families.json", payload["baseline_families_config"])
+        self.assertEqual("tier_a_advisory_only", payload["specialist_rollout_phase"])
+        self.assertEqual("hybrid_governed", payload["baseline_surface"]["family"])
+        self.assertIn("claude", payload["assistants"])
+        self.assertIn("gemini", payload["assistants"])
+        self.assertEqual("config/assistant-providers.env.local", payload["provider_setup"]["local_env_path"])
+        self.assertEqual("docs/configuration/openai-compatible-provider-setup.md", payload["provider_setup"]["setup_doc_path"])
+        self.assertEqual("chat_completions", payload["assistant_api_compatibility"]["primary_wire_api"])
+        self.assertEqual("gpt-5.4", payload["assistant_provider_resolution"]["codex"]["model"])
+        self.assertEqual("vco_artifacts", payload["governance_surface"]["persistent_memory_owner"])
+        self.assertEqual("codex_only", payload["governance_surface"]["assistants"]["codex"]["capability_mode"])
+        self.assertEqual("proxy_mediated", payload["governance_surface"]["assistants"]["claude"]["capability_mode"])
         if payload["assembled_distribution_exists"]:
             self.assertIn("assembled", payload)
+
+    def test_status_can_load_provider_overrides_from_local_env_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            env_file = Path(tempdir) / "assistant-providers.env.local"
+            env_file.write_text(
+                """
+EVCODE_ENABLE_LIVE_SPECIALISTS=1
+EVCODE_RIGHTCODES_API_KEY=sk-local-test
+EVCODE_CODEX_MODEL=gpt-5.4-custom
+EVCODE_CLAUDE_MODEL=claude-custom
+EVCODE_GEMINI_BASE_URL=https://example.test/gemini/v1
+""".strip() + "\n",
+                encoding="utf-8",
+            )
+            completed = subprocess.run(
+                ["node", str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"), "status", "--json"],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+                env={
+                    **os.environ,
+                    "EVCODE_PROVIDER_ENV_FILE": str(env_file),
+                },
+            )
+            payload = json.loads(completed.stdout)
+            self.assertTrue(payload["provider_setup"]["local_env_present"])
+            self.assertTrue(payload["provider_setup"]["loaded_from_file"])
+            self.assertIn("EVCODE_CODEX_MODEL", payload["provider_setup"]["loaded_keys"])
+            self.assertEqual(str(env_file), payload["provider_setup"]["resolved_local_env_path"])
+            self.assertEqual("gpt-5.4-custom", payload["assistant_provider_resolution"]["codex"]["model"])
+            self.assertEqual("claude-custom", payload["assistant_provider_resolution"]["claude"]["model"])
+            self.assertEqual("https://example.test/gemini/v1", payload["assistant_provider_resolution"]["gemini"]["base_url"])
+            self.assertTrue(payload["assistant_provider_resolution"]["claude"]["api_key_present"])
+
+    def test_standard_run_emits_non_silent_warning_when_specialist_provider_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            completed = subprocess.run(
+                [
+                    "node",
+                    str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"),
+                    "run",
+                    "--task",
+                    "Plan the product architecture and UX workflow for an ambiguous redesign",
+                    "--artifacts-root",
+                    tempdir,
+                    "--run-id",
+                    "non-silent-fallback",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+                env={
+                    **os.environ,
+                    "EVCODE_ENABLE_LIVE_SPECIALISTS": "1",
+                    "EVCODE_RIGHTCODES_API_KEY": "sk-local-test",
+                    "EVCODE_CLAUDE_BASE_URL": "http://127.0.0.1:9/claude/v1",
+                    "EVCODE_CLAUDE_MODEL": "claude-opus-4-6",
+                },
+            )
+            payload = json.loads(completed.stdout)
+            self.assertEqual("degraded_fallback_to_codex", payload["execution_outcome"])
+            self.assertTrue(payload["warnings"])
+            warning = payload["warnings"][0]
+            self.assertEqual("claude", warning["assistant_name"])
+            self.assertIn("degraded mode", warning["message"])
+            self.assertIn("Warning:", completed.stderr)
+            degraded = {item["assistant_name"] for item in payload["specialist_routing"]["degraded_delegates"]}
+            self.assertIn("claude", degraded)
+            codex_integration = json.loads(Path(payload["artifacts"]["codex_integration_receipt"]).read_text(encoding="utf-8"))
+            self.assertIn("claude", codex_integration["degraded_specialists"])
+
+    def test_standard_probe_providers_reports_non_live_statuses(self) -> None:
+        completed = subprocess.run(
+            [
+                "node",
+                str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"),
+                "probe-providers",
+                "--json",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        payload = json.loads(completed.stdout)
+        self.assertEqual("standard", payload["channel"])
+        self.assertEqual("hybrid_governed", payload["baseline_family"])
+        self.assertEqual("config/baseline-families.json", payload["baseline_families_config"])
+        self.assertFalse(payload["live_probe_requested"])
+        self.assertEqual("chat_completions", payload["compatibility_surface"]["primary_wire_api"])
+        by_name = {item["assistant_name"]: item for item in payload["results"]}
+        self.assertEqual("missing_api_key", by_name["codex"]["status"])
+        self.assertEqual("missing_api_key", by_name["claude"]["status"])
+        self.assertEqual("missing_api_key", by_name["gemini"]["status"])
+        self.assertEqual("advisory_only", by_name["claude"]["authority_tier"])
+        self.assertEqual("proxy_mediated", by_name["gemini"]["capability_mode"])
+
+    def test_benchmark_probe_providers_reports_policy_state(self) -> None:
+        completed = subprocess.run(
+            [
+                "node",
+                str(REPO_ROOT / "apps" / "evcode-bench" / "bin" / "evcode-bench.js"),
+                "probe-providers",
+                "--json",
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        payload = json.loads(completed.stdout)
+        self.assertEqual("benchmark", payload["channel"])
+        self.assertEqual("core_benchmark", payload["baseline_family"])
+        self.assertEqual("config/baseline-families.json", payload["baseline_families_config"])
+        by_name = {item["assistant_name"]: item for item in payload["results"]}
+        self.assertEqual("missing_api_key", by_name["codex"]["status"])
+        self.assertEqual("policy_disabled", by_name["claude"]["status"])
+        self.assertEqual("policy_disabled", by_name["gemini"]["status"])
+        self.assertEqual("codex_only", by_name["codex"]["capability_mode"])
 
     def test_standard_entrypoint_uses_bundled_host_when_present(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:

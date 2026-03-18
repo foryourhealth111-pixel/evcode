@@ -47,6 +47,51 @@ Install references:
 - [docs/install/system-deps.md](docs/install/system-deps.md)
 - [docs/benchmark/submission-runbook.md](docs/benchmark/submission-runbook.md)
 
+## Assistant Provider Setup
+
+EvCode now exposes one canonical setup surface for assistant-provider overrides:
+
+- setup guide: [docs/configuration/openai-compatible-provider-setup.md](docs/configuration/openai-compatible-provider-setup.md)
+- tracked example: `config/assistant-providers.env.example`
+- local untracked file: `config/assistant-providers.env.local`
+
+Compatibility note:
+
+- EvCode currently treats OpenAI-style `chat/completions` as the primary portable wire format for Codex / Claude / Gemini specialist routing.
+- `responses` remains adapter-tolerant, but provider behavior still varies and should not be assumed interchangeable without verification.
+
+
+## Baseline Verification
+
+EvCode now distinguishes two formal baseline families:
+
+- `hybrid_governed`: standard-channel governed routing proof for Codex + advisory specialists
+- `core_benchmark`: benchmark-channel Codex-only safety proof
+
+Offline verification commands:
+
+```bash
+python3 scripts/verify/run_hybrid_baseline.py --repo-root . --json
+python3 scripts/verify/validate_distribution_portability.py --repo-root . --json
+```
+
+Live opt-in operator verification:
+
+```bash
+EVCODE_ENABLE_LIVE_SPECIALISTS=1 EVCODE_RIGHTCODES_API_KEY=... \
+python3 scripts/verify/run_live_hybrid_validation.py --repo-root . --json
+```
+
+The live validator is intentionally separate from default `check` and CI so benchmark-safe offline verification remains deterministic.
+
+## Product Preview
+
+The static marketing preview used by repository-level smoke tests lives at:
+
+- `apps/site/index.html`
+
+Open it directly in a browser when you need a lightweight product surface for demos, release packaging checks, or visual review without starting a dev server.
+
 ## Product Baseline
 
 The current authoritative architecture is defined in:

@@ -1,0 +1,30 @@
+{
+  "task": "rightcodes claude retest wave3",
+  "generated_at": "2026-03-18T12:59:16Z",
+  "status": "provider_block_reconfirmed",
+  "requirement_doc": "docs/requirements/2026-03-18-rightcodes-claude-retest-wave3.md",
+  "execution_plan": "docs/plans/2026-03-18-rightcodes-claude-retest-wave3-execution-plan.md",
+  "probe_attempt_count": 10,
+  "governed_run_attempt_count": 4,
+  "probe_status_counts": {
+    "live_probe_failed": 10
+  },
+  "governed_run_status_counts": {
+    "provider_failure": 4
+  },
+  "claude_v1_reasons": [
+    "provider_http_error:403:{\"error\":{\"message\":\"openai_error\",\"type\":\"bad_response_status_code\",\"param\":\"\",\"code\":\"bad_response_status_code\"}}"
+  ],
+  "claude_no_v1_reasons": [
+    "provider_http_error:403:error code: 1010"
+  ],
+  "mean_v1_probe_seconds": 27.177,
+  "mean_no_v1_probe_seconds": 25.772,
+  "mean_governed_run_seconds": 1.014,
+  "archived_temp_artifacts": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-rightcodes-claude-retest-wave3/live-retest-artifacts/rightcodes-claude-retest",
+  "notes": [
+    "All 10 Claude live probe attempts failed.",
+    "All 4 governed Claude-requesting runs completed locally but downgraded Claude to provider_failure.",
+    "This retest found no evidence of intermittent Claude recovery under the supplied RightCodes config."
+  ]
+}

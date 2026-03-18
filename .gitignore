@@ -13,3 +13,4 @@ __pycache__/
 .venv/
 outputs/
 tmp/
+config/assistant-providers.env.local

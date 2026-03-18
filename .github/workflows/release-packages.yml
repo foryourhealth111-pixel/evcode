@@ -41,6 +41,8 @@ jobs:
           python3 scripts/verify/check_proof_docs.py
           python3 scripts/verify/check_distribution_assembly.py
           python3 scripts/verify/check_host_bridge.py
+          python3 scripts/verify/run_hybrid_baseline.py --repo-root . --json
+          python3 scripts/verify/validate_distribution_portability.py --repo-root . --json
           python3 -m unittest discover -s tests -p 'test_*.py'
 
       - name: Build Release Packages

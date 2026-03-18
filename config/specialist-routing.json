@@ -1,0 +1,224 @@
+{
+  "version": 2,
+  "updated_at": "2026-03-18",
+  "route_stage": "plan_execute",
+  "codex_final_authority": true,
+  "benchmark_suppresses_specialists": true,
+  "authority_tiers": [
+    "advisory_only",
+    "isolated_candidate_apply",
+    "final_executor"
+  ],
+  "skill_capsule_defaults": {
+    "compiler": "vco_skill_compiler",
+    "version": "2026-03-18",
+    "control_plane_only_rules": [
+      "never claim completion",
+      "never bypass requirement or plan lineage",
+      "never widen authority tier",
+      "never mutate repository truth outside codex-owned execution"
+    ],
+    "required_output_sections": [
+      "summary",
+      "assumptions",
+      "proposed_actions",
+      "files_touched_or_proposed",
+      "confidence_level",
+      "unresolved_risks",
+      "recommended_next_actor",
+      "capability_requests",
+      "receipt_refs"
+    ]
+  },
+  "capability_policy": {
+    "classes": {
+      "codex_only": [
+        "filesystem_write",
+        "shell_execution",
+        "github_write",
+        "receipt_emit",
+        "cleanup_process",
+        "benchmark_submission"
+      ],
+      "proxy_mediated": [
+        "repo_read_context",
+        "issue_context",
+        "figma_context",
+        "screenshot_context",
+        "docs_lookup"
+      ],
+      "specialist_read_only": [
+        "figma_read",
+        "docs_read",
+        "repo_metadata_read",
+        "page_structure_read"
+      ]
+    },
+    "default_specialist_mode": "proxy_mediated"
+  },
+  "memory_policy": {
+    "owner": "vco_artifacts",
+    "specialist_local_memory": "ephemeral",
+    "authoritative_sources": [
+      "requirement_doc",
+      "execution_plan",
+      "assistant_policy_snapshot",
+      "specialist_routing_receipt",
+      "codex_integration_receipt"
+    ]
+  },
+  "required_receipts": [
+    "routing_receipt",
+    "task_packet_receipt",
+    "capability_proxy_receipt",
+    "specialist_result_receipt",
+    "codex_integration_receipt",
+    "verification_receipt",
+    "cleanup_receipt"
+  ],
+  "classification": {
+    "frontend_keywords": [
+      "frontend",
+      "ui",
+      "ux",
+      "visual",
+      "design",
+      "landing page",
+      "hero",
+      "layout",
+      "spacing",
+      "typography",
+      "animation",
+      "polish",
+      "theme",
+      "responsive"
+    ],
+    "backend_keywords": [
+      "backend",
+      "database",
+      "schema",
+      "migration",
+      "api",
+      "auth",
+      "security",
+      "runtime",
+      "bridge",
+      "adapter",
+      "provider",
+      "contract",
+      "verification",
+      "test"
+    ],
+    "planning_keywords": [
+      "plan",
+      "spec",
+      "requirements",
+      "product",
+      "architecture",
+      "workflow",
+      "strategy",
+      "acceptance criteria",
+      "roadmap",
+      "需求",
+      "user needs",
+      "project design",
+      "overall design",
+      "整体设计",
+      "需求理解"
+    ],
+    "ambiguity_keywords": [
+      "improve",
+      "better",
+      "feel",
+      "vibe",
+      "beautiful",
+      "polished",
+      "inspired",
+      "creative",
+      "unclear",
+      "ambiguous"
+    ],
+    "high_risk_keywords": [
+      "migration",
+      "security",
+      "auth",
+      "billing",
+      "runtime",
+      "bridge",
+      "provider",
+      "verification",
+      "test harness",
+      "contract"
+    ],
+    "visual_evidence_keywords": [
+      "screenshot",
+      "mock",
+      "visual",
+      "design token",
+      "component",
+      "layout",
+      "typography",
+      "color",
+      "motion"
+    ],
+    "documentation_keywords": [
+      "document",
+      "documentation",
+      "docs",
+      "report",
+      "summary",
+      "summarize",
+      "paper",
+      "writeup",
+      "manuscript",
+      "memo",
+      "brief",
+      "proposal",
+      "essay",
+      "article",
+      "报告",
+      "总结",
+      "论文",
+      "文档"
+    ]
+  },
+  "policies": {
+    "claude": {
+      "default_authority_tier": "advisory_only",
+      "allowed_domains": [
+        "documentation",
+        "planning",
+        "frontend_visual",
+        "mixed_ui"
+      ],
+      "minimum_ambiguity": "medium",
+      "documentation_defaults_to_claude": true,
+      "planning_defaults_to_claude": true,
+      "exploration_modes_supported": [
+        "autonomous",
+        "packetized"
+      ],
+      "default_exploration_mode": "packetized",
+      "default_exploration_mode_by_domain": {
+        "documentation": "autonomous",
+        "planning": "autonomous",
+        "frontend_visual": "packetized",
+        "mixed_ui": "packetized"
+      },
+      "packetized_when": [
+        "high_risk",
+        "explicit_scope_lock",
+        "multi_agent_audit"
+      ]
+    },
+    "gemini": {
+      "default_authority_tier": "advisory_only",
+      "allowed_domains": [
+        "frontend_visual",
+        "mixed_ui"
+      ],
+      "maximum_risk": "medium",
+      "requires_visual_evidence": true
+    }
+  }
+}

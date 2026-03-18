@@ -1,0 +1,53 @@
+{
+  "task": "evcode portable paths phase-1 verification",
+  "date": "2026-03-18",
+  "workspace": "/home/lqf/table/table3",
+  "session_root": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1",
+  "overall_verdict": {
+    "status": "pass",
+    "summary": "Phase-1 portability repairs are verified: portable-first provider config resolution works, both run help surfaces are fixed, benchmark handoff semantics are stable at requested paths, and the impacted regression suite passes fresh."
+  },
+  "commands": [
+    {
+      "command": "XDG_CONFIG_HOME=<session tmp> node apps/evcode/bin/evcode.js status --json",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/logs/portable-status.json"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js run --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/logs/evcode-run-help.log"
+    },
+    {
+      "command": "node apps/evcode-bench/bin/evcode-bench.js run --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/logs/evcode-bench-run-help.log"
+    },
+    {
+      "command": "EVCODE_BENCH_HOST_BIN=<session fake host> node apps/evcode-bench/bin/evcode-bench.js run --task 'Verify benchmark artifact handoff semantics' --workspace <session tmp> --artifacts-root <session tmp> --result-json <session tmp> --run-id portable-paths-phase1-bench-smoke",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/logs/benchmark-smoke.json"
+    },
+    {
+      "command": "python3 -m pytest tests/test_portable_paths.py tests/test_benchmark_artifact_contract.py tests/test_app_entrypoints.py tests/test_benchmark_execution_bridge.py tests/test_runtime_bridge.py tests/test_contracts.py -q",
+      "exit_code": 0,
+      "evidence": "22 passed in 1.31s"
+    }
+  ],
+  "portable_config_snapshot": {
+    "active_env_source": "portable_user_config",
+    "portable_codex_model": "gpt-5.4-portable",
+    "portable_claude_model": "claude-portable"
+  },
+  "benchmark_handoff_snapshot": {
+    "artifacts_redirected": true,
+    "requested_runtime_summary": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/tmp/bench-workspace/requested-artifacts/runtime-summary.json",
+    "requested_result_json": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/tmp/bench-workspace/requested-output/result.json",
+    "handoff_manifest": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/tmp/bench-workspace/requested-artifacts/benchmark-artifact-handoff.json"
+  },
+  "cleanup": {
+    "external_tmp_roots_removed": 2,
+    "node_processes_cleaned": 0,
+    "node_audit": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-portable-paths-phase1/node-process-audit.txt"
+  }
+}

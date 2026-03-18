@@ -1,5 +1,9 @@
 {
   "profile": "standard",
   "default_mode": "interactive_governed",
-  "provider_policy": "config/provider-policy.standard.json"
+  "provider_policy": "config/provider-policy.standard.json",
+  "assistant_policy": "config/assistant-policy.standard.json",
+  "specialist_routing": "config/specialist-routing.json",
+  "baseline_family": "hybrid_governed",
+  "baseline_families_config": "config/baseline-families.json"
 }

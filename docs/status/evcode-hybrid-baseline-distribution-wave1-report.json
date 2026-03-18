@@ -1,0 +1,29 @@
+{
+  "task": "evcode hybrid baseline family and distributed install validation",
+  "date": "2026-03-18",
+  "workspace": "/home/lqf/table/table3",
+  "session_root": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1",
+  "overall_verdict": {
+    "status": "pass",
+    "summary": "Hybrid and core baseline families are now formalized and externally verifiable, while distributed-install style startup and portable unified configuration both work from external paths without weakening benchmark Codex-only safety."
+  },
+  "verification": {
+    "targeted_pytest": "21 passed in 2.03s",
+    "broader_pytest": "38 passed in 2.38s",
+    "hybrid_baseline": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/logs/hybrid-baseline.json",
+    "distribution_portability": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/logs/distribution-portability.json"
+  },
+  "status_surfaces": {
+    "standard": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/logs/evcode-status.json",
+    "benchmark": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/logs/evcode-bench-status.json"
+  },
+  "probe_surfaces": {
+    "standard": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/logs/evcode-probe.json",
+    "benchmark": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/logs/evcode-bench-probe.json"
+  },
+  "cleanup": {
+    "external_temp_roots_removed": 1,
+    "node_processes_cleaned": 0,
+    "node_audit": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-hybrid-baseline-distribution-wave1/node-process-audit.txt"
+  }
+}

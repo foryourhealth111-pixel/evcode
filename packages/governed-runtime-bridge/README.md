@@ -8,3 +8,4 @@ Responsibilities:
 - preserve the 6-stage state machine
 - build hidden context payloads
 - carry requirement and plan traceability forward
+- attach specialist routing receipts without creating a second router

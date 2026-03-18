@@ -1,0 +1,224 @@
+{
+  "task": "evcode production user journey testing",
+  "date": "2026-03-18",
+  "workspace": "/home/lqf/table/table3",
+  "session_root": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing",
+  "overall_verdict": {
+    "status": "pass_with_actionable_issues",
+    "summary": "Core EvCode user journeys are working: legacy passthrough surfaces still open Codex-compatible help, standard-channel governed runs work, live Claude and Gemini advisory routing both work under Codex authority, and benchmark mode stays Codex-primary. Two real CLI UX/automation issues remain around `run --help` and benchmark artifact path predictability."
+  },
+  "high_level_results": {
+    "legacy_help_surfaces_ok": true,
+    "status_and_doctor_ok": true,
+    "local_probe_ok": true,
+    "live_probe_ok": true,
+    "standard_claude_route_ok": true,
+    "standard_gemini_route_ok": true,
+    "benchmark_codex_only_ok": true
+  },
+  "commands": [
+    {
+      "command": "node apps/evcode/bin/evcode.js --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-help.log"
+    },
+    {
+      "command": "node apps/evcode-bench/bin/evcode-bench.js --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-bench-help.log"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js native --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-native-help.log"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js resume --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-resume-help.log"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js mcp --help",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-mcp-help.log"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js run --help",
+      "exit_code": 1,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-run-help.log"
+    },
+    {
+      "command": "node apps/evcode-bench/bin/evcode-bench.js run --help",
+      "exit_code": 1,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-bench-run-help.log"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js status --json",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-status.json"
+    },
+    {
+      "command": "node apps/evcode-bench/bin/evcode-bench.js status --json",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-bench-status.json"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js doctor",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-doctor.log"
+    },
+    {
+      "command": "node apps/evcode/bin/evcode.js probe-providers --json",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-probe.json"
+    },
+    {
+      "command": "node apps/evcode-bench/bin/evcode-bench.js probe-providers --json",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-bench-probe.json"
+    },
+    {
+      "command": "EVCODE_RIGHTCODES_API_KEY=*** EVCODE_ENABLE_LIVE_SPECIALISTS=1 node apps/evcode/bin/evcode.js probe-providers --json --live",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-probe-live.json"
+    },
+    {
+      "command": "EVCODE_RIGHTCODES_API_KEY=*** EVCODE_ENABLE_LIVE_SPECIALISTS=1 node apps/evcode/bin/evcode.js run --task '<planning advisory>' --run-id prod-user-standard-smoke --artifacts-root ...",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-standard-run.log"
+    },
+    {
+      "command": "EVCODE_RIGHTCODES_API_KEY=*** EVCODE_ENABLE_LIVE_SPECIALISTS=1 node apps/evcode/bin/evcode.js run --task '<frontend visual advisory>' --run-id prod-user-gemini-smoke --artifacts-root ...",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-gemini-run.log"
+    },
+    {
+      "command": "EVCODE_RIGHTCODES_API_KEY=*** EVCODE_ENABLE_LIVE_SPECIALISTS=1 node apps/evcode-bench/bin/evcode-bench.js run --task '<benchmark smoke>' --run-id prod-user-benchmark-smoke --artifacts-root ... --result-json ...",
+      "exit_code": 0,
+      "evidence": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-benchmark-run.log"
+    }
+  ],
+  "standard_status_snapshot": {
+    "channel": "standard",
+    "assistants": [
+      "codex",
+      "claude",
+      "gemini"
+    ],
+    "specialist_rollout_phase": "tier_a_advisory_only"
+  },
+  "benchmark_status_snapshot": {
+    "channel": "benchmark",
+    "assistants": [
+      "codex",
+      "claude",
+      "gemini"
+    ],
+    "specialist_rollout_phase": "codex_primary_benchmark"
+  },
+  "local_probe_snapshot": {
+    "standard": {
+      "codex": "missing_api_key",
+      "claude": "missing_api_key",
+      "gemini": "missing_api_key"
+    },
+    "benchmark": {
+      "codex": "missing_api_key",
+      "claude": "policy_disabled",
+      "gemini": "policy_disabled"
+    }
+  },
+  "live_probe_snapshot": {
+    "codex": "live_compatible",
+    "claude": "live_compatible",
+    "gemini": "live_compatible"
+  },
+  "real_run_snapshots": {
+    "standard_claude": {
+      "run_id": "prod-user-standard-smoke",
+      "route_kind": "codex_with_specialists",
+      "active_delegates": [
+        "claude"
+      ],
+      "suppressed_delegates": [
+        {
+          "assistant_name": "gemini",
+          "reason": "task_not_visual_frontend_fit"
+        }
+      ],
+      "summary_path": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/tmp/standard-run/outputs/runtime/vibe-sessions/prod-user-standard-smoke/runtime-summary.json"
+    },
+    "standard_gemini": {
+      "run_id": "prod-user-gemini-smoke",
+      "route_kind": "codex_with_specialists",
+      "active_delegates": [
+        "gemini"
+      ],
+      "suppressed_delegates": [
+        {
+          "assistant_name": "claude",
+          "reason": "task_not_plan_heavy_enough"
+        }
+      ],
+      "summary_path": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/tmp/gemini-run/outputs/runtime/vibe-sessions/prod-user-gemini-smoke/runtime-summary.json"
+    },
+    "benchmark": {
+      "run_id": "prod-user-benchmark-smoke",
+      "route_kind": "codex_only_benchmark",
+      "suppressed_delegates": [
+        {
+          "assistant_name": "claude",
+          "reason": "benchmark_policy_suppression"
+        },
+        {
+          "assistant_name": "gemini",
+          "reason": "benchmark_policy_suppression"
+        }
+      ],
+      "summary_path": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/captured/benchmark-smoke/runtime-summary.json"
+    }
+  },
+  "findings": [
+    {
+      "severity": "medium",
+      "title": "`run --help` is broken on both standard and benchmark CLIs",
+      "evidence": [
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-run-help.log",
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-bench-run-help.log",
+        "/home/lqf/table/table3/apps/evcode/bin/evcode.js",
+        "/home/lqf/table/table3/apps/evcode-bench/bin/evcode-bench.js"
+      ],
+      "details": "Both commands exit 1 and print `Missing --task for run` instead of showing usage. The custom `run()` handlers require `--task` before any help handling, which regresses normal CLI help semantics."
+    },
+    {
+      "severity": "medium",
+      "title": "Benchmark run silently redirects user-requested artifact paths into `/tmp` when they are inside the workspace",
+      "evidence": [
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-benchmark-run.log",
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/captured/benchmark-smoke/runtime-summary.json",
+        "/home/lqf/table/table3/scripts/runtime/runtime_lib.py",
+        "/home/lqf/table/table3/scripts/runtime/execute_benchmark_task.py",
+        "/home/lqf/table/table3/scripts/runtime/run_governed_runtime.py"
+      ],
+      "details": "The benchmark smoke completed, but `requested_artifacts_root` under the repo was replaced by `effective_artifacts_root` in `/tmp`, and the requested `--result-json` path was also redirected. The behavior is explicit in the runtime code, but from a caller perspective it breaks path predictability unless they parse returned JSON."
+    },
+    {
+      "severity": "low",
+      "title": "Benchmark fast path emits a helper PATH warning because Codex home is materialized under `/tmp`",
+      "evidence": [
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/captured/benchmark-smoke/benchmark.stderr.txt"
+      ],
+      "details": "The benchmark run still succeeded, but stderr includes `Refusing to create helper binaries under temporary dir \"/tmp\"`. This is not a functional failure in this run, but it is noisy and may confuse operators or automated stderr-based failure detectors."
+    },
+    {
+      "severity": "low",
+      "title": "Status output can confuse operators about provider env loading",
+      "evidence": [
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-status.json",
+        "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/logs/evcode-doctor.log"
+      ],
+      "details": "`provider_setup.local_env_present` is `false` while the assembled distribution reports `env_local_present: true`. That distinction is technically possible, but the current status surface does not explain it, so a user may think provider configuration is absent even when the assembled distribution carries one."
+    }
+  ],
+  "captured_benchmark_artifacts": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-production-user-journey-testing/captured/benchmark-smoke"
+}

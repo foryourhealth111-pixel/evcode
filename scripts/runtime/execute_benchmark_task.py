@@ -81,6 +81,14 @@ def ensure_external_artifact_path(path: Path, workspace: Path, *, suffix: str, r
     return path
 
 
+def materialize_requested_result_handoff(requested_path: Path, effective_path: Path) -> Path | None:
+    if requested_path.resolve() == effective_path.resolve():
+        return None
+    requested_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(effective_path, requested_path)
+    return requested_path
+
+
 def resolve_source_codex_home() -> Path:
     configured = os.environ.get("EVCODE_BENCH_SOURCE_CODEX_HOME") or os.environ.get("CODEX_HOME")
     if configured:
@@ -338,8 +346,9 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
     stdout_path = run_dir / "benchmark.stdout.txt"
     stderr_path = run_dir / "benchmark.stderr.txt"
     assistant_output_path = run_dir / "assistant-last-message.txt"
+    requested_result_json_path = (config.result_json_path or (config.artifacts_root / config.run_id / "result.json")).resolve()
     result_json_path = ensure_external_artifact_path(
-        config.result_json_path or (config.artifacts_root / config.run_id / "result.json"),
+        requested_result_json_path,
         config.workspace,
         suffix="result.json",
         run_id=config.run_id,
@@ -415,9 +424,12 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "execution_target_source": provider_settings.execution_target_source,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
+        "requested_result_json_path": str(requested_result_json_path),
+        "effective_result_json_path": str(result_json_path),
         "generated_at": utc_now(),
     }
     result_json_path.write_text(json.dumps(result_payload, indent=2), encoding="utf-8")
+    requested_result_handoff = materialize_requested_result_handoff(requested_result_json_path, result_json_path)
 
     receipt_path = run_dir / "phase-execute.json"
     receipt = {
@@ -440,12 +452,14 @@ def execute_benchmark_task(config: BenchmarkExecutionConfig) -> dict[str, Any]:
         "execution_target_source": provider_settings.execution_target_source,
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),
+        "requested_result_json_path": str(requested_result_json_path),
         "result_json_path": str(result_json_path),
         "generated_at": utc_now(),
     }
     receipt_path.write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     return {
         "execute_receipt_path": str(receipt_path),
+        "requested_result_json_path": str(requested_result_handoff or requested_result_json_path),
         "result_json_path": str(result_json_path),
         "stdout_path": str(stdout_path),
         "stderr_path": str(stderr_path),

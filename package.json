@@ -25,6 +25,9 @@
     "check:assembly": "python3 scripts/verify/check_distribution_assembly.py",
     "check:release": "sh -lc 'VERSION=$(python3 scripts/release/print_version.py) && python3 scripts/verify/check_release_packages.py --manifest dist/releases/evcode-v$VERSION/artifacts/release-manifest.json'",
     "test": "python3 -m unittest discover -s tests -p 'test_*.py'",
-    "check": "python3 scripts/verify/check_contracts.py && python3 scripts/verify/check_proof_docs.py && python3 scripts/verify/check_distribution_assembly.py && python3 -m unittest discover -s tests -p 'test_*.py'"
+    "check": "python3 scripts/verify/check_contracts.py && python3 scripts/verify/check_proof_docs.py && python3 scripts/verify/check_distribution_assembly.py && python3 scripts/verify/run_hybrid_baseline.py --repo-root . --json && python3 scripts/verify/validate_distribution_portability.py --repo-root . --json && python3 -m unittest discover -s tests -p 'test_*.py'",
+    "check:baseline": "python3 scripts/verify/run_hybrid_baseline.py --repo-root . --json",
+    "check:portability": "python3 scripts/verify/validate_distribution_portability.py --repo-root . --json",
+    "check:live-hybrid": "python3 scripts/verify/run_live_hybrid_validation.py --repo-root . --json"
   }
 }

@@ -1,0 +1,23 @@
+{
+  "task": "non-silent fallback warning wave5",
+  "generated_at": "2026-03-18T13:24:54Z",
+  "status": "verified",
+  "requirement_doc": "docs/requirements/2026-03-18-non-silent-fallback-warning-wave5.md",
+  "execution_plan": "docs/plans/2026-03-18-non-silent-fallback-warning-wave5-execution-plan.md",
+  "targeted_pytest": "19 passed in 0.97s",
+  "fresh_execution_outcome": "degraded_fallback_to_codex",
+  "warning_count": 1,
+  "warning_assistants": [
+    "claude"
+  ],
+  "stderr_warning_present": true,
+  "degraded_delegate_names": [
+    "claude"
+  ],
+  "codex_final_executor": "codex",
+  "notes": [
+    "Fallback is no longer silent at the CLI surface for specialist/provider failure.",
+    "The runtime summary and receipts now expose degraded state explicitly.",
+    "Codex takeover behavior was preserved."
+  ]
+}

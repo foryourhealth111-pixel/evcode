@@ -1,0 +1,152 @@
+{
+  "validation_root": "/tmp/evcode-real-collab-ehcfgu4o",
+  "started_at": "2026-03-18T06:40:46Z",
+  "wave1": {
+    "standard_provider_setup_path": "config/assistant-providers.env.local",
+    "standard_probe_statuses": {
+      "codex": "ready_for_live_probe",
+      "claude": "ready_for_live_probe",
+      "gemini": "ready_for_live_probe"
+    },
+    "benchmark_probe_statuses": {
+      "codex": "ready_for_live_probe",
+      "claude": "policy_disabled",
+      "gemini": "policy_disabled"
+    },
+    "benchmark_rollout_phase": "codex_primary_benchmark",
+    "doctor_ok": true
+  },
+  "wave2": {
+    "live_probe_statuses": {
+      "codex": "live_compatible",
+      "claude": "live_compatible",
+      "gemini": "live_compatible"
+    },
+    "live_probe_next_actor": {
+      "codex": "codex",
+      "claude": "codex",
+      "gemini": "codex"
+    }
+  },
+  "wave3": {
+    "claude_planning": {
+      "route_kind": "codex_with_specialists",
+      "classification": {
+        "domain": "planning",
+        "risk": "low",
+        "ambiguity": "medium",
+        "evidence": "visual",
+        "scores": {
+          "frontend": 3,
+          "backend": 0,
+          "planning": 3,
+          "documentation": 3,
+          "ambiguity": 0,
+          "visual_evidence": 1,
+          "high_risk": 0
+        }
+      },
+      "requested": [
+        "claude"
+      ],
+      "active": [
+        "claude"
+      ],
+      "result_statuses": {
+        "claude": "completed_live_advisory"
+      },
+      "next_actors": {
+        "claude": "codex"
+      }
+    },
+    "gemini_visual": {
+      "route_kind": "codex_with_specialists",
+      "classification": {
+        "domain": "frontend_visual",
+        "risk": "low",
+        "ambiguity": "medium",
+        "evidence": "visual",
+        "scores": {
+          "frontend": 7,
+          "backend": 0,
+          "planning": 0,
+          "documentation": 0,
+          "ambiguity": 1,
+          "visual_evidence": 4,
+          "high_risk": 0
+        }
+      },
+      "requested": [
+        "claude",
+        "gemini"
+      ],
+      "active": [
+        "claude",
+        "gemini"
+      ],
+      "result_statuses": {
+        "claude": "completed_live_advisory",
+        "gemini": "completed_live_advisory"
+      },
+      "next_actors": {
+        "claude": "codex",
+        "gemini": "codex"
+      }
+    },
+    "mixed_ui": {
+      "route_kind": "codex_with_specialists",
+      "classification": {
+        "domain": "mixed_ui",
+        "risk": "medium",
+        "ambiguity": "medium",
+        "evidence": "visual",
+        "scores": {
+          "frontend": 4,
+          "backend": 1,
+          "planning": 1,
+          "documentation": 0,
+          "ambiguity": 1,
+          "visual_evidence": 0,
+          "high_risk": 0
+        }
+      },
+      "requested": [
+        "claude",
+        "gemini"
+      ],
+      "active": [
+        "claude",
+        "gemini"
+      ],
+      "result_statuses": {
+        "claude": "completed_live_advisory",
+        "gemini": "completed_live_advisory"
+      },
+      "next_actors": {
+        "claude": "codex",
+        "gemini": "codex"
+      }
+    },
+    "benchmark_mixed": {
+      "route_kind": "codex_only_benchmark",
+      "requested": [],
+      "suppressed": [
+        "claude",
+        "gemini"
+      ],
+      "benchmark_result_path": "/tmp/evcode-real-collab-ehcfgu4o/artifacts-benchmark/benchmark_mixed/result.json"
+    }
+  },
+  "wave4": {
+    "bad_gemini_live_probe_statuses": {
+      "codex": "live_compatible",
+      "claude": "live_compatible",
+      "gemini": "live_probe_failed"
+    },
+    "bad_gemini_live_probe_reasons": {
+      "codex": "live probe completed",
+      "claude": "live probe completed",
+      "gemini": "provider_http_error:503:{\"error\":{\"message\":\"No available channel for model gemini-3.1-pro-preview under group cli (distributor) (request id: 20260318064430248188401qdWZsrdh)\",\"type\":\"new_api_error\",\"param\":\"\",\"code\":\"model_not_found\"}}"
+    }
+  }
+}

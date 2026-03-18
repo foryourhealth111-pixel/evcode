@@ -1,0 +1,146 @@
+{
+  "version": 2,
+  "updated_at": "2026-03-18",
+  "profile": "benchmark",
+  "rollout_phase": "codex_primary_benchmark",
+  "execution_authority": "codex",
+  "persistent_memory_owner": "vco_artifacts",
+  "mutation_policy": "codex_only",
+  "capability_policy_classes": [
+    "codex_only",
+    "proxy_mediated",
+    "specialist_read_only"
+  ],
+  "skill_capsule_compiler": "vco_skill_compiler",
+  "live_specialists_require_opt_in_env": "EVCODE_ENABLE_LIVE_SPECIALISTS",
+  "assistants": {
+    "codex": {
+      "enabled": true,
+      "authority_tier": "final_executor",
+      "provider_family": "api",
+      "provider": "rightcodes_codex",
+      "wire_api": "chat_completions",
+      "default_base_url": "https://right.codes/codex/v1",
+      "default_model": "gpt-5.4",
+      "base_url_env_var": "EVCODE_CODEX_BASE_URL",
+      "model_env_var": "EVCODE_CODEX_MODEL",
+      "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+      "allowed_domains": [
+        "planning",
+        "frontend_visual",
+        "mixed_ui",
+        "backend_engineering",
+        "general_engineering"
+      ],
+      "allowed_output_types": [
+        "execution_plan",
+        "integration_patch",
+        "verification_report"
+      ],
+      "required_skill_capsules": [
+        "engineering_execution",
+        "verification",
+        "integration"
+      ],
+      "capability_access": {
+        "mode": "codex_only",
+        "direct_read_only_allowlist": [
+          "figma_read",
+          "docs_read",
+          "repo_metadata_read",
+          "page_structure_read"
+        ],
+        "proxy_allowlist": [
+          "repo_read_context",
+          "issue_context",
+          "figma_context",
+          "screenshot_context",
+          "docs_lookup"
+        ],
+        "mutation_allowlist": [
+          "filesystem_write",
+          "shell_execution",
+          "github_write",
+          "receipt_emit",
+          "cleanup_process",
+          "benchmark_submission"
+        ],
+        "denied": []
+      }
+    },
+    "claude": {
+      "enabled": false,
+      "authority_tier": "advisory_only",
+      "provider_family": "api",
+      "provider": "rightcodes_claude",
+      "wire_api": "chat_completions",
+      "default_base_url": "https://right.codes/claude/v1",
+      "default_model": "claude-opus-4-6",
+      "base_url_env_var": "EVCODE_CLAUDE_BASE_URL",
+      "model_env_var": "EVCODE_CLAUDE_MODEL",
+      "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+      "suppression_reason": "Benchmark channel remains Codex-primary until specialist proof gates pass.",
+      "required_skill_capsules": [
+        "documentation",
+        "planning",
+        "governed_advisory"
+      ],
+      "exploration_modes_supported": [
+        "autonomous",
+        "packetized"
+      ],
+      "default_exploration_mode": "packetized",
+      "capability_access": {
+        "mode": "proxy_mediated",
+        "direct_read_only_allowlist": [],
+        "proxy_allowlist": [
+          "repo_read_context",
+          "docs_lookup"
+        ],
+        "mutation_allowlist": [],
+        "denied": [
+          "filesystem_write",
+          "shell_execution",
+          "github_write",
+          "cleanup_process",
+          "benchmark_submission"
+        ]
+      }
+    },
+    "gemini": {
+      "enabled": false,
+      "authority_tier": "advisory_only",
+      "provider_family": "api",
+      "provider": "rightcodes_gemini",
+      "wire_api": "chat_completions",
+      "default_base_url": "https://right.codes/gemini/v1",
+      "default_model": "gemini-2.5-pro",
+      "base_url_env_var": "EVCODE_GEMINI_BASE_URL",
+      "model_env_var": "EVCODE_GEMINI_MODEL",
+      "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+      "suppression_reason": "Benchmark channel remains Codex-primary until specialist proof gates pass.",
+      "required_skill_capsules": [
+        "visual_design",
+        "frontend_presentational",
+        "governed_advisory"
+      ],
+      "capability_access": {
+        "mode": "proxy_mediated",
+        "direct_read_only_allowlist": [],
+        "proxy_allowlist": [
+          "repo_read_context",
+          "figma_context",
+          "screenshot_context"
+        ],
+        "mutation_allowlist": [],
+        "denied": [
+          "filesystem_write",
+          "shell_execution",
+          "github_write",
+          "cleanup_process",
+          "benchmark_submission"
+        ]
+      }
+    }
+  }
+}

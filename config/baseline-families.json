@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "updated_at": "2026-03-18",
+  "families": {
+    "hybrid_governed": {
+      "channel": "standard",
+      "mode": "interactive_governed",
+      "reporting_group": "hybrid",
+      "requires_live_providers": false,
+      "purpose": "Governed mixed-assistant baseline coverage without granting specialist mutation authority.",
+      "scenarios": [
+        {
+          "id": "codex_backend_only",
+          "channel": "standard",
+          "task": "Implement a runtime provider migration and backend verification contract",
+          "expected_route_kind": "codex_only",
+          "expected_requested_delegates": [],
+          "expected_suppressed_delegates": ["claude", "gemini"]
+        },
+        {
+          "id": "claude_planning",
+          "channel": "standard",
+          "task": "Plan the product architecture and UX workflow for an ambiguous redesign",
+          "expected_route_kind": "codex_with_specialists",
+          "expected_requested_delegates": ["claude"],
+          "expected_suppressed_delegates": ["gemini"]
+        },
+        {
+          "id": "gemini_frontend_visual",
+          "channel": "standard",
+          "task": "Design a responsive frontend landing page with typography, spacing, motion, and visual polish",
+          "expected_route_kind": "codex_with_specialists",
+          "expected_requested_delegates": ["gemini"],
+          "expected_suppressed_delegates": ["claude"]
+        }
+      ]
+    },
+    "core_benchmark": {
+      "channel": "benchmark",
+      "mode": "benchmark_autonomous",
+      "reporting_group": "core",
+      "requires_live_providers": false,
+      "purpose": "Deterministic Codex-primary benchmark coverage with specialist suppression.",
+      "scenarios": [
+        {
+          "id": "benchmark_specialist_suppression",
+          "channel": "benchmark",
+          "task": "Design a polished frontend benchmark run with visual evidence",
+          "expected_route_kind": "codex_only_benchmark",
+          "expected_requested_delegates": [],
+          "expected_suppressed_delegates": ["claude", "gemini"]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "task": "evcode gate integration and live hybrid validation wave2",
+  "generated_at": "2026-03-18T11:50:30Z",
+  "status": "verified_with_external_provider_failure",
+  "requirement_doc": "docs/requirements/2026-03-18-evcode-gate-integration-live-hybrid-wave2.md",
+  "execution_plan": "docs/plans/2026-03-18-evcode-gate-integration-live-hybrid-wave2-execution-plan.md",
+  "code_gate_status": "pass",
+  "targeted_pytest": "................                                                         [100%]\n16 passed in 2.08s",
+  "npm_check_status": "pass",
+  "offline_baseline_status": "pass",
+  "distribution_portability_status": "pass",
+  "live_validation_exit_code": 1,
+  "live_validation_status": "fail",
+  "live_probe": {
+    "codex": {
+      "status": "live_compatible",
+      "reason": "live probe completed",
+      "recommended_next_actor": "codex"
+    },
+    "claude": {
+      "status": "live_probe_failed",
+      "reason": "provider_http_error:403:{\"error\":{\"message\":\"openai_error\",\"type\":\"bad_response_status_code\",\"param\":\"\",\"code\":\"bad_response_status_code\"}}",
+      "recommended_next_actor": null
+    },
+    "gemini": {
+      "status": "live_compatible",
+      "reason": "live probe completed",
+      "recommended_next_actor": "codex"
+    }
+  },
+  "live_checks": {
+    "probe_live_compatible": false,
+    "claude_planning_requested": true,
+    "gemini_visual_requests_gemini": true,
+    "mixed_ui_requests_both": true,
+    "benchmark_control_suppressed": true,
+    "all_next_actors_codex": true
+  },
+  "claude_probe_v1_reason": "provider_http_error:403:{\"error\":{\"message\":\"openai_error\",\"type\":\"bad_response_status_code\",\"param\":\"\",\"code\":\"bad_response_status_code\"}}",
+  "claude_probe_no_v1_reason": "provider_http_error:403:error code: 1010",
+  "archived_live_artifacts": "/home/lqf/table/table3/outputs/runtime/vibe-sessions/2026-03-18-evcode-gate-integration-live-hybrid-wave2/live-validation-artifacts/rightcodes-run-latest",
+  "notes": [
+    "Offline gate integration is verified and package-level check now passes.",
+    "Repository-level check required a real apps/site static preview; this wave added that missing surface so npm run check is truthful.",
+    "RightCodes Claude remains externally blocked with 403 responses on both /claude/v1 and /claude during live probing.",
+    "Gemini and Codex remain live-compatible under the configured OpenAI-style chat completions surface."
+  ]
+}

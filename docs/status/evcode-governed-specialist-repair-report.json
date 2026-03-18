@@ -1,0 +1,474 @@
+{
+  "generated_at": "2026-03-18T08:29:24Z",
+  "validation_root": "/tmp/evcode-governed-specialist-BOcSYe",
+  "tests": {
+    "suite": "python3 -m pytest tests/test_delegation_contracts.py tests/test_assistant_adapters.py tests/test_specialist_routing.py tests/test_runtime_bridge.py tests/test_app_entrypoints.py tests/test_contracts.py -q",
+    "result": "37 passed in 0.96s"
+  },
+  "contracts": {
+    "check_contracts": "ok",
+    "architecture_doc": "docs/architecture/evcode-governed-specialist-repair.md"
+  },
+  "status": {
+    "standard": {
+      "governance_surface": {
+        "control_plane": "vco",
+        "final_executor": "codex",
+        "persistent_memory_owner": "vco_artifacts",
+        "mutation_policy": "codex_only",
+        "capability_transport": "mcp",
+        "capability_classes": [
+          "codex_only",
+          "proxy_mediated",
+          "specialist_read_only"
+        ],
+        "default_specialist_capability_mode": "proxy_mediated",
+        "assistants": {
+          "codex": {
+            "authority_tier": "final_executor",
+            "capability_mode": "codex_only",
+            "required_skill_capsules": [
+              "engineering_execution",
+              "verification",
+              "integration"
+            ]
+          },
+          "claude": {
+            "authority_tier": "advisory_only",
+            "capability_mode": "proxy_mediated",
+            "required_skill_capsules": [
+              "documentation",
+              "planning",
+              "governed_advisory"
+            ]
+          },
+          "gemini": {
+            "authority_tier": "advisory_only",
+            "capability_mode": "proxy_mediated",
+            "required_skill_capsules": [
+              "visual_design",
+              "frontend_presentational",
+              "governed_advisory"
+            ]
+          }
+        }
+      },
+      "assistant_provider_resolution": {
+        "codex": {
+          "enabled": true,
+          "provider": "rightcodes_codex",
+          "wire_api": "chat_completions",
+          "base_url": "https://right.codes/codex/v1",
+          "model": "gpt-5.4",
+          "authority_tier": "final_executor",
+          "capability_mode": "codex_only",
+          "required_skill_capsules": [
+            "engineering_execution",
+            "verification",
+            "integration"
+          ],
+          "direct_read_only_allowlist": [
+            "figma_read",
+            "docs_read",
+            "repo_metadata_read",
+            "page_structure_read"
+          ],
+          "proxy_allowlist": [
+            "repo_read_context",
+            "issue_context",
+            "figma_context",
+            "screenshot_context",
+            "docs_lookup"
+          ],
+          "mutation_allowlist": [
+            "filesystem_write",
+            "shell_execution",
+            "github_write",
+            "receipt_emit",
+            "cleanup_process",
+            "benchmark_submission"
+          ],
+          "denied_capabilities": [],
+          "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+          "api_key_present": true
+        },
+        "claude": {
+          "enabled": true,
+          "provider": "rightcodes_claude",
+          "wire_api": "chat_completions",
+          "base_url": "https://right.codes/claude/v1",
+          "model": "claude-opus-4-6",
+          "authority_tier": "advisory_only",
+          "capability_mode": "proxy_mediated",
+          "required_skill_capsules": [
+            "documentation",
+            "planning",
+            "governed_advisory"
+          ],
+          "direct_read_only_allowlist": [],
+          "proxy_allowlist": [
+            "repo_read_context",
+            "issue_context",
+            "docs_lookup",
+            "figma_context",
+            "screenshot_context"
+          ],
+          "mutation_allowlist": [],
+          "denied_capabilities": [
+            "filesystem_write",
+            "shell_execution",
+            "github_write",
+            "cleanup_process",
+            "benchmark_submission"
+          ],
+          "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+          "api_key_present": true
+        },
+        "gemini": {
+          "enabled": true,
+          "provider": "rightcodes_gemini",
+          "wire_api": "chat_completions",
+          "base_url": "https://right.codes/gemini/v1",
+          "model": "gemini-2.5-pro",
+          "authority_tier": "advisory_only",
+          "capability_mode": "proxy_mediated",
+          "required_skill_capsules": [
+            "visual_design",
+            "frontend_presentational",
+            "governed_advisory"
+          ],
+          "direct_read_only_allowlist": [],
+          "proxy_allowlist": [
+            "repo_read_context",
+            "figma_context",
+            "screenshot_context",
+            "docs_lookup"
+          ],
+          "mutation_allowlist": [],
+          "denied_capabilities": [
+            "filesystem_write",
+            "shell_execution",
+            "github_write",
+            "cleanup_process",
+            "benchmark_submission"
+          ],
+          "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+          "api_key_present": true
+        }
+      }
+    },
+    "benchmark": {
+      "governance_surface": {
+        "control_plane": "vco",
+        "final_executor": "codex",
+        "persistent_memory_owner": "vco_artifacts",
+        "mutation_policy": "codex_only",
+        "capability_transport": "mcp",
+        "capability_classes": [
+          "codex_only",
+          "proxy_mediated",
+          "specialist_read_only"
+        ],
+        "default_specialist_capability_mode": "proxy_mediated",
+        "assistants": {
+          "codex": {
+            "authority_tier": "final_executor",
+            "capability_mode": "codex_only",
+            "required_skill_capsules": [
+              "engineering_execution",
+              "verification",
+              "integration"
+            ]
+          },
+          "claude": {
+            "authority_tier": "advisory_only",
+            "capability_mode": "proxy_mediated",
+            "required_skill_capsules": [
+              "documentation",
+              "planning",
+              "governed_advisory"
+            ]
+          },
+          "gemini": {
+            "authority_tier": "advisory_only",
+            "capability_mode": "proxy_mediated",
+            "required_skill_capsules": [
+              "visual_design",
+              "frontend_presentational",
+              "governed_advisory"
+            ]
+          }
+        }
+      },
+      "assistant_provider_resolution": {
+        "codex": {
+          "enabled": true,
+          "provider": "rightcodes_codex",
+          "wire_api": "chat_completions",
+          "base_url": "https://right.codes/codex/v1",
+          "model": "gpt-5.4",
+          "authority_tier": "final_executor",
+          "capability_mode": "codex_only",
+          "required_skill_capsules": [
+            "engineering_execution",
+            "verification",
+            "integration"
+          ],
+          "direct_read_only_allowlist": [
+            "figma_read",
+            "docs_read",
+            "repo_metadata_read",
+            "page_structure_read"
+          ],
+          "proxy_allowlist": [
+            "repo_read_context",
+            "issue_context",
+            "figma_context",
+            "screenshot_context",
+            "docs_lookup"
+          ],
+          "mutation_allowlist": [
+            "filesystem_write",
+            "shell_execution",
+            "github_write",
+            "receipt_emit",
+            "cleanup_process",
+            "benchmark_submission"
+          ],
+          "denied_capabilities": [],
+          "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+          "api_key_present": true
+        },
+        "claude": {
+          "enabled": false,
+          "provider": "rightcodes_claude",
+          "wire_api": "chat_completions",
+          "base_url": "https://right.codes/claude/v1",
+          "model": "claude-opus-4-6",
+          "authority_tier": "advisory_only",
+          "capability_mode": "proxy_mediated",
+          "required_skill_capsules": [
+            "documentation",
+            "planning",
+            "governed_advisory"
+          ],
+          "direct_read_only_allowlist": [],
+          "proxy_allowlist": [
+            "repo_read_context",
+            "docs_lookup"
+          ],
+          "mutation_allowlist": [],
+          "denied_capabilities": [
+            "filesystem_write",
+            "shell_execution",
+            "github_write",
+            "cleanup_process",
+            "benchmark_submission"
+          ],
+          "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+          "api_key_present": true
+        },
+        "gemini": {
+          "enabled": false,
+          "provider": "rightcodes_gemini",
+          "wire_api": "chat_completions",
+          "base_url": "https://right.codes/gemini/v1",
+          "model": "gemini-2.5-pro",
+          "authority_tier": "advisory_only",
+          "capability_mode": "proxy_mediated",
+          "required_skill_capsules": [
+            "visual_design",
+            "frontend_presentational",
+            "governed_advisory"
+          ],
+          "direct_read_only_allowlist": [],
+          "proxy_allowlist": [
+            "repo_read_context",
+            "figma_context",
+            "screenshot_context"
+          ],
+          "mutation_allowlist": [],
+          "denied_capabilities": [
+            "filesystem_write",
+            "shell_execution",
+            "github_write",
+            "cleanup_process",
+            "benchmark_submission"
+          ],
+          "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+          "api_key_present": true
+        }
+      }
+    }
+  },
+  "probe_live": {
+    "default_gate": "specialists require EVCODE_ENABLE_LIVE_SPECIALISTS=1 for live probe",
+    "results": {
+      "codex": "live_compatible",
+      "claude": "live_compatible",
+      "gemini": "live_compatible"
+    },
+    "recommended_next_actor": {
+      "codex": "codex",
+      "claude": "codex",
+      "gemini": "codex"
+    }
+  },
+  "scenarios": {
+    "documentation_claude_autonomous": {
+      "run_id": "governed-proof-claude-planning-v2",
+      "route_kind": "codex_with_specialists",
+      "active_specialists": [
+        "claude"
+      ],
+      "suppressed_specialists": [
+        "gemini"
+      ],
+      "result_status": "completed_live_advisory",
+      "recommended_next_actor": "codex",
+      "capability_requests": [
+        {
+          "capability": "repo_read_context",
+          "mode": "proxy_mediated"
+        }
+      ],
+      "capability_proxy_events": [
+        {
+          "assistant_name": "claude",
+          "capability_mode": "proxy_mediated",
+          "requested_capabilities": [
+            {
+              "capability": "repo_read_context",
+              "mode": "proxy_mediated"
+            }
+          ],
+          "status": "proxy_required"
+        }
+      ]
+    },
+    "visual_gemini_with_claude_support": {
+      "run_id": "governed-proof-gemini-visual-v4",
+      "route_kind": "codex_with_specialists",
+      "active_specialists": [
+        "claude",
+        "gemini"
+      ],
+      "gemini_status": "completed_live_advisory",
+      "claude_status": "completed_live_advisory",
+      "gemini_next_actor": "codex",
+      "claude_capability_requests": [
+        {
+          "capability": "repo_read_context",
+          "mode": "proxy_mediated"
+        }
+      ],
+      "capability_proxy_events": [
+        {
+          "assistant_name": "claude",
+          "capability_mode": "proxy_mediated",
+          "requested_capabilities": [
+            {
+              "capability": "repo_read_context",
+              "mode": "proxy_mediated"
+            }
+          ],
+          "status": "proxy_required"
+        },
+        {
+          "assistant_name": "gemini",
+          "capability_mode": "proxy_mediated",
+          "requested_capabilities": [],
+          "status": "not_requested"
+        }
+      ]
+    },
+    "mixed_ui_codex_final_executor": {
+      "run_id": "governed-proof-mixed-ui-v3",
+      "route_kind": "codex_with_specialists",
+      "final_executor": "codex",
+      "active_specialists": [
+        "claude",
+        "gemini"
+      ],
+      "claude_status": "completed_live_advisory",
+      "gemini_status": "completed_live_advisory",
+      "claude_capability_requests": [
+        {
+          "capability": "repo_read_context",
+          "mode": "proxy_mediated"
+        }
+      ],
+      "capability_proxy_events": [
+        {
+          "assistant_name": "claude",
+          "capability_mode": "proxy_mediated",
+          "requested_capabilities": [
+            {
+              "capability": "repo_read_context",
+              "mode": "proxy_mediated"
+            }
+          ],
+          "status": "proxy_required"
+        },
+        {
+          "assistant_name": "gemini",
+          "capability_mode": "proxy_mediated",
+          "requested_capabilities": [],
+          "status": "not_requested"
+        }
+      ]
+    },
+    "benchmark_suppression": {
+      "route_kind": "codex_only_benchmark",
+      "requested_delegates": [],
+      "suppressed_delegates": [
+        {
+          "assistant_name": "claude",
+          "reason": "benchmark_policy_suppression"
+        },
+        {
+          "assistant_name": "gemini",
+          "reason": "benchmark_policy_suppression"
+        }
+      ]
+    }
+  },
+  "repairs": {
+    "runtime_bridge_import_fix": "from copy import deepcopy added to scripts/runtime/runtime_lib.py",
+    "claude_chat_adapter_fix": {
+      "prompt_behavior": "Claude chat-completions requests repo_read_context instead of inventing paths",
+      "max_tokens": 650,
+      "validated_by": "tests/test_assistant_adapters.py plus planning/visual/mixed live runs"
+    }
+  },
+  "resilience_note": {
+    "observed_once": "A visual-task Gemini run briefly degraded via provider_failure before a successful retry.",
+    "meaning": "External provider instability exists, but governed runtime degradation remains contained and retryable."
+  },
+  "operator_visible_denials": {
+    "claude_denied_capabilities": [
+      "filesystem_write",
+      "shell_execution",
+      "github_write",
+      "cleanup_process",
+      "benchmark_submission"
+    ],
+    "gemini_denied_capabilities": [
+      "filesystem_write",
+      "shell_execution",
+      "github_write",
+      "cleanup_process",
+      "benchmark_submission"
+    ]
+  },
+  "artifacts": {
+    "status_standard_json": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/status-standard.json",
+    "status_benchmark_json": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/status-benchmark.json",
+    "probe_live_json": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/probe-live.json",
+    "planning_summary": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/planning-summary.json",
+    "visual_summary": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/visual-summary.json",
+    "mixed_summary": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/mixed-summary.json",
+    "benchmark_route": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18/benchmark-route.json"
+  },
+  "artifact_bundle": "/home/lqf/table/table3/outputs/runtime/governed-specialist-repair-proof/2026-03-18"
+}

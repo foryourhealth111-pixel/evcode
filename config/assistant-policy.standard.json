@@ -1,0 +1,183 @@
+{
+  "version": 2,
+  "updated_at": "2026-03-18",
+  "profile": "standard",
+  "rollout_phase": "tier_a_advisory_only",
+  "execution_authority": "codex",
+  "persistent_memory_owner": "vco_artifacts",
+  "mutation_policy": "codex_only",
+  "capability_policy_classes": [
+    "codex_only",
+    "proxy_mediated",
+    "specialist_read_only"
+  ],
+  "skill_capsule_compiler": "vco_skill_compiler",
+  "live_specialists_require_opt_in_env": "EVCODE_ENABLE_LIVE_SPECIALISTS",
+  "assistants": {
+    "codex": {
+      "enabled": true,
+      "authority_tier": "final_executor",
+      "provider_family": "api",
+      "provider": "rightcodes_codex",
+      "wire_api": "chat_completions",
+      "default_base_url": "https://right.codes/codex/v1",
+      "default_model": "gpt-5.4",
+      "base_url_env_var": "EVCODE_CODEX_BASE_URL",
+      "model_env_var": "EVCODE_CODEX_MODEL",
+      "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+      "allowed_domains": [
+        "planning",
+        "frontend_visual",
+        "mixed_ui",
+        "backend_engineering",
+        "general_engineering"
+      ],
+      "allowed_output_types": [
+        "execution_plan",
+        "integration_patch",
+        "verification_report"
+      ],
+      "required_skill_capsules": [
+        "engineering_execution",
+        "verification",
+        "integration"
+      ],
+      "capability_access": {
+        "mode": "codex_only",
+        "direct_read_only_allowlist": [
+          "figma_read",
+          "docs_read",
+          "repo_metadata_read",
+          "page_structure_read"
+        ],
+        "proxy_allowlist": [
+          "repo_read_context",
+          "issue_context",
+          "figma_context",
+          "screenshot_context",
+          "docs_lookup"
+        ],
+        "mutation_allowlist": [
+          "filesystem_write",
+          "shell_execution",
+          "github_write",
+          "receipt_emit",
+          "cleanup_process",
+          "benchmark_submission"
+        ],
+        "denied": []
+      }
+    },
+    "claude": {
+      "enabled": true,
+      "authority_tier": "advisory_only",
+      "provider_family": "api",
+      "provider": "rightcodes_claude",
+      "wire_api": "chat_completions",
+      "default_base_url": "https://right.codes/claude/v1",
+      "default_model": "claude-opus-4-6",
+      "base_url_env_var": "EVCODE_CLAUDE_BASE_URL",
+      "model_env_var": "EVCODE_CLAUDE_MODEL",
+      "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+      "allowed_domains": [
+        "documentation",
+        "planning",
+        "frontend_visual",
+        "mixed_ui"
+      ],
+      "allowed_output_types": [
+        "plan_artifact",
+        "ux_structure",
+        "acceptance_criteria_refinement",
+        "document_artifact",
+        "requirements_brief",
+        "project_design_brief",
+        "research_summary"
+      ],
+      "required_skill_capsules": [
+        "documentation",
+        "planning",
+        "governed_advisory"
+      ],
+      "default_when": [
+        "documentation_writing",
+        "requirements_understanding",
+        "overall_project_design"
+      ],
+      "exploration_modes_supported": [
+        "autonomous",
+        "packetized"
+      ],
+      "default_exploration_mode": "packetized",
+      "default_exploration_mode_by_domain": {
+        "documentation": "autonomous",
+        "planning": "autonomous",
+        "frontend_visual": "packetized",
+        "mixed_ui": "packetized"
+      },
+      "capability_access": {
+        "mode": "proxy_mediated",
+        "direct_read_only_allowlist": [],
+        "proxy_allowlist": [
+          "repo_read_context",
+          "issue_context",
+          "docs_lookup",
+          "figma_context",
+          "screenshot_context"
+        ],
+        "mutation_allowlist": [],
+        "denied": [
+          "filesystem_write",
+          "shell_execution",
+          "github_write",
+          "cleanup_process",
+          "benchmark_submission"
+        ]
+      }
+    },
+    "gemini": {
+      "enabled": true,
+      "authority_tier": "advisory_only",
+      "provider_family": "api",
+      "provider": "rightcodes_gemini",
+      "wire_api": "chat_completions",
+      "default_base_url": "https://right.codes/gemini/v1",
+      "default_model": "gemini-2.5-pro",
+      "base_url_env_var": "EVCODE_GEMINI_BASE_URL",
+      "model_env_var": "EVCODE_GEMINI_MODEL",
+      "api_key_env_var": "EVCODE_RIGHTCODES_API_KEY",
+      "allowed_domains": [
+        "frontend_visual",
+        "mixed_ui"
+      ],
+      "allowed_output_types": [
+        "visual_plan",
+        "component_styling_proposal",
+        "ui_candidate_diff"
+      ],
+      "required_skill_capsules": [
+        "visual_design",
+        "frontend_presentational",
+        "governed_advisory"
+      ],
+      "capability_access": {
+        "mode": "proxy_mediated",
+        "direct_read_only_allowlist": [],
+        "proxy_allowlist": [
+          "repo_read_context",
+          "figma_context",
+          "screenshot_context",
+          "docs_lookup"
+        ],
+        "mutation_allowlist": [],
+        "denied": [
+          "filesystem_write",
+          "shell_execution",
+          "github_write",
+          "cleanup_process",
+          "benchmark_submission"
+        ]
+      }
+    }
+  }
+}
