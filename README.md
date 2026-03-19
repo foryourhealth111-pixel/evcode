@@ -1,6 +1,6 @@
 # EvCode
 
-EvCode is now **source-build-first**.
+EvCode is now **source-build-first**.This is not ready to use.
 
 The primary audience is:
 
