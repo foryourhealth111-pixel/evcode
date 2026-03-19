@@ -29,6 +29,28 @@ function resolveSessionRoot({ root, artifactsRoot, runId }) {
   return path.join(artifactsRoot || root, "outputs", "runtime", "vibe-sessions", runId);
 }
 
+function listSessionRoots({ root, artifactsRoot }) {
+  const sessionsRoot = path.join(artifactsRoot || root, "outputs", "runtime", "vibe-sessions");
+  if (!fs.existsSync(sessionsRoot)) {
+    return [];
+  }
+  return fs.readdirSync(sessionsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.join(sessionsRoot, entry.name));
+}
+
+function resolveLatestSessionRoot({ root, artifactsRoot }) {
+  const candidates = listSessionRoots({ root, artifactsRoot })
+    .map((sessionRoot) => {
+      const summaryPath = path.join(sessionRoot, "runtime-summary.json");
+      const statsTarget = fs.existsSync(summaryPath) ? summaryPath : sessionRoot;
+      return { sessionRoot, mtimeMs: fs.statSync(statsTarget).mtimeMs, hasSummary: fs.existsSync(summaryPath) };
+    })
+    .filter((item) => item.hasSummary)
+    .sort((left, right) => right.mtimeMs - left.mtimeMs);
+  return candidates.length ? candidates[0].sessionRoot : null;
+}
+
 function loadRuntimeSummary(sessionRoot) {
   const summaryPath = path.join(sessionRoot, "runtime-summary.json");
   if (!fs.existsSync(summaryPath)) {
@@ -224,6 +246,8 @@ function renderRuntimeView(summary, events, options = {}) {
 module.exports = {
   createRunId,
   resolveSessionRoot,
+  listSessionRoots,
+  resolveLatestSessionRoot,
   loadRuntimeSummary,
   loadRuntimeEvents,
   synthesizeEventsFromSummary,

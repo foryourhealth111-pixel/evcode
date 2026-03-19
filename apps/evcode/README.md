@@ -13,17 +13,19 @@ This app preserves host-native CLI behavior while embedding the shared VCO gover
 Current commands:
 
 - `evcode`
-- `evcode resume --yolo`
 - `evcode assemble`
 - `evcode probe-providers --json`
 - `evcode probe-providers --json --live`
 - `evcode run --task "..."`
 - `evcode run --task "..." --trace`
-- `evcode trace <run-id>`
+- `evcode resume [<run-id>] [--artifacts-root PATH]`
+- `evcode trace <run-id> [--artifacts-root PATH]`
+- `evcode native resume ...` to force host-native passthrough instead of EvCode governed history restore
 
 CLI actor visibility notes:
 
 - default non-TTY or `--json` runs preserve machine-readable JSON behavior
 - interactive TTY runs render a governed actor board for `codex`, `claude`, and `gemini`
 - `--trace` renders the saved event timeline and advisory/integration summaries
+- `resume` restores saved EvCode governed history from `outputs/runtime/vibe-sessions`
 - `probe-providers --live` is the recommended preflight before expecting live Claude or Gemini activity in the actor board

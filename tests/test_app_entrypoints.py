@@ -555,5 +555,62 @@ sys.exit(0)
             self.assertIn("route: codex_with_specialists", traced.stdout)
 
 
+
+    def test_standard_resume_restores_latest_governed_session(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            subprocess.run(
+                [
+                    "node",
+                    str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"),
+                    "run",
+                    "--task",
+                    "Plan the product architecture and UX workflow for an ambiguous redesign",
+                    "--artifacts-root",
+                    tempdir,
+                    "--run-id",
+                    "resume-history-demo",
+                    "--json",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+                env={**os.environ, "EVCODE_ENABLE_LIVE_SPECIALISTS": "0"},
+            )
+            resumed = subprocess.run(
+                [
+                    "node",
+                    str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"),
+                    "resume",
+                    "--artifacts-root",
+                    tempdir,
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            self.assertIn("EvCode Governed Run", resumed.stdout)
+            self.assertIn("run_id: resume-history-demo", resumed.stdout)
+            self.assertIn("route: codex_with_specialists", resumed.stdout)
+
+    def test_standard_resume_errors_clearly_when_no_governed_session_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            resumed = subprocess.run(
+                [
+                    "node",
+                    str(REPO_ROOT / "apps" / "evcode" / "bin" / "evcode.js"),
+                    "resume",
+                    "--artifacts-root",
+                    tempdir,
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotEqual(0, resumed.returncode)
+            self.assertIn("No governed runtime sessions found", resumed.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

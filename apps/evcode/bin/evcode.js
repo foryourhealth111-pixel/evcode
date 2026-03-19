@@ -186,6 +186,10 @@ function printTraceUsage(commandName) {
   console.log(`Usage: ${commandName} trace <run-id> [--artifacts-root PATH] [--json]`);
 }
 
+function printResumeUsage(commandName) {
+  console.log(`Usage: ${commandName} resume [<run-id>] [--artifacts-root PATH] [--json]`);
+}
+
 function hasFlag(args, name) {
   return args.includes(name);
 }
@@ -193,6 +197,21 @@ function hasFlag(args, name) {
 function valueForFlag(args, name, fallback = "") {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : fallback;
+}
+
+function firstPositionalArg(args, flagsWithValues = []) {
+  const valueFlags = new Set(flagsWithValues);
+  for (let index = 0; index < args.length; index += 1) {
+    const item = args[index];
+    if (item.startsWith("--")) {
+      if (valueFlags.has(item)) {
+        index += 1;
+      }
+      continue;
+    }
+    return item;
+  }
+  return "";
 }
 
 function printWarningsFromPayload(payload) {
@@ -525,13 +544,51 @@ function native(root, passthroughArgs) {
   process.exit(result.status || 0);
 }
 
+function resume(root) {
+  const args = process.argv.slice(3);
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+    printResumeUsage("evcode");
+    process.exit(0);
+  }
+  const artifactsRoot = valueForFlag(args, "--artifacts-root", root);
+  const runId = valueForFlag(args, "--run-id", firstPositionalArg(args, ["--artifacts-root", "--run-id"]));
+  const sessionRoot = runId
+    ? runtimeDisplay.resolveSessionRoot({ root, artifactsRoot, runId })
+    : runtimeDisplay.resolveLatestSessionRoot({ root, artifactsRoot });
+  if (!sessionRoot) {
+    console.error("No governed runtime sessions found for EvCode resume");
+    process.exit(1);
+  }
+  const summary = runtimeDisplay.loadRuntimeSummary(sessionRoot);
+  if (!summary) {
+    console.error(`Unable to locate runtime summary for resume target: ${runId || sessionRoot}`);
+    process.exit(1);
+  }
+  const events = runtimeDisplay.loadRuntimeEvents(summary?.artifacts?.runtime_events)
+    || runtimeDisplay.loadRuntimeEvents(path.join(sessionRoot, "runtime-events.jsonl"));
+  const resolvedEvents = events.length ? events : runtimeDisplay.synthesizeEventsFromSummary(summary);
+  if (hasFlag(args, "--json")) {
+    process.stdout.write(`${JSON.stringify({ summary, events: resolvedEvents }, null, 2)}
+`);
+    return;
+  }
+  const text = runtimeDisplay.renderRuntimeView(summary, resolvedEvents, {
+    isTTY: process.stdout.isTTY,
+    noColor: hasFlag(args, "--no-color"),
+    trace: true,
+    context: { runId: summary?.run_id || runId || "" },
+  });
+  process.stdout.write(`${text}
+`);
+}
+
 function trace(root) {
   const args = process.argv.slice(3);
   if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
     printTraceUsage("evcode");
     process.exit(0);
   }
-  const runId = valueForFlag(args, "--run-id", args.find((item) => !item.startsWith("--")) || "");
+  const runId = valueForFlag(args, "--run-id", firstPositionalArg(args, ["--artifacts-root", "--run-id"]));
   if (!runId) {
     console.error("Missing run id for trace");
     process.exit(1);
@@ -561,7 +618,7 @@ function trace(root) {
 
 const root = path.resolve(__dirname, "../../..");
 const providerEnvState = providerRuntime.applyLocalProviderEnv(root, process.env);
-const internalCommands = new Set(["doctor", "status", "run", "trace", "assemble", "host-build", "native", "probe-providers"]);
+const internalCommands = new Set(["doctor", "status", "run", "resume", "trace", "assemble", "host-build", "native", "probe-providers"]);
 const command = process.argv[2] || "native";
 const jsonFlag = process.argv.includes("--json");
 
@@ -584,6 +641,11 @@ async function main() {
 
   if (command === "run") {
     await run(root);
+    process.exit(0);
+  }
+
+  if (command === "resume") {
+    resume(root);
     process.exit(0);
   }
 
@@ -615,7 +677,7 @@ async function main() {
     native(root, process.argv.slice(2));
   }
 
-  console.log("Usage: evcode [status|doctor|run|trace|assemble|host-build|native|probe-providers] [--json]");
+  console.log("Usage: evcode [status|doctor|run|resume|trace|assemble|host-build|native|probe-providers] [--json]");
 }
 
 main().catch((error) => {
