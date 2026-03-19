@@ -1,0 +1,26 @@
+{
+  "run_id": "2026-03-19-evcode-claude-gemini-capability-clarification-wave8",
+  "status": "pass",
+  "finding": "The prior frontend workflow answer described a generic Codex-led implementation loop and omitted the EvCode specialist-routing layer, so it failed to mention Gemini even though EvCode policy routes frontend-visual work to Gemini advisory mode.",
+  "evidence": {
+    "status_surface": "evcode status --json shows assistants [codex, claude, gemini] and advisory governance",
+    "routing_policy": "config/assistant-policy.standard.json and config/specialist-routing.json",
+    "runtime_bridge": "apps/evcode/bin/evcode.js -> scripts/runtime/run_governed_runtime.py",
+    "specialist_router": "packages/specialist-routing/python/evcode_specialist_routing.py"
+  },
+  "clarification": {
+    "gemini_should_be_mentioned_when": [
+      "frontend_visual",
+      "mixed_ui with strong visual evidence or aesthetics focus"
+    ],
+    "claude_should_be_mentioned_when": [
+      "planning",
+      "documentation",
+      "ambiguous UX or overall project design"
+    ],
+    "why_it_may_have_been_omitted": [
+      "the answer was framed as generic coding workflow rather than EvCode governed routing workflow",
+      "current local live provider setup is not active, so the answer may have stayed conservative"
+    ]
+  }
+}

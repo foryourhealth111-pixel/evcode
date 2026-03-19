@@ -19,6 +19,21 @@ function Assert-True {
     return $false
 }
 
+function Get-IsDictionaryLike {
+    param([object]$Value)
+
+    if ($null -eq $Value) { return $false }
+    return ($Value -is [System.Collections.IDictionary]) -or ($Value -is [pscustomobject])
+}
+
+function Get-IsListLike {
+    param([object]$Value)
+
+    if ($null -eq $Value) { return $false }
+    if ($Value -is [string]) { return $false }
+    return ($Value -is [System.Collections.IEnumerable])
+}
+
 function Remove-IgnoredKeys {
     param(
         [object]$Node,
@@ -27,27 +42,23 @@ function Remove-IgnoredKeys {
 
     if ($null -eq $Node) { return $null }
 
-    if ($Node -is [System.Management.Automation.PSCustomObject] -or ($Node -isnot [string] -and $Node.PSObject -and @($Node.PSObject.Properties).Count -gt 0 -and $Node -isnot [System.Collections.IEnumerable])) {
+    if (Get-IsDictionaryLike -Value $Node) {
+        $names = @()
+        if ($Node -is [System.Collections.IDictionary]) {
+            $names = @($Node.Keys)
+        } else {
+            $names = @($Node.PSObject.Properties.Name)
+        }
+
         $ordered = [ordered]@{}
-        foreach ($prop in @($Node.PSObject.Properties) | Sort-Object -Property Name) {
-            $key = [string]$prop.Name
-            if ($IgnoreKeys -contains $key) { continue }
-            $ordered[$key] = Remove-IgnoredKeys -Node $prop.Value -IgnoreKeys $IgnoreKeys
+        foreach ($name in @($names | Where-Object { $IgnoreKeys -notcontains [string]$_ } | Sort-Object)) {
+            $value = if ($Node -is [System.Collections.IDictionary]) { $Node[$name] } else { $Node.$name }
+            $ordered[[string]$name] = Remove-IgnoredKeys -Node $value -IgnoreKeys $IgnoreKeys
         }
         return $ordered
     }
 
-    if ($Node -is [System.Collections.IDictionary]) {
-        $ordered = [ordered]@{}
-        foreach ($key in @($Node.Keys) | Sort-Object) {
-            $keyText = [string]$key
-            if ($IgnoreKeys -contains $keyText) { continue }
-            $ordered[$keyText] = Remove-IgnoredKeys -Node $Node[$key] -IgnoreKeys $IgnoreKeys
-        }
-        return $ordered
-    }
-
-    if ($Node -is [System.Collections.IEnumerable] -and -not ($Node -is [string])) {
+    if (Get-IsListLike -Value $Node) {
         $items = @()
         foreach ($item in $Node) {
             $items += Remove-IgnoredKeys -Node $item -IgnoreKeys $IgnoreKeys

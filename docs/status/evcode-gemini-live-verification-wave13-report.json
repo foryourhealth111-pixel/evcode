@@ -1,0 +1,54 @@
+{
+  "run_id": "2026-03-19-evcode-gemini-live-verification-wave13",
+  "status": "pass",
+  "requirement_doc": "docs/requirements/2026-03-19-evcode-gemini-live-verification-wave13.md",
+  "execution_plan": "docs/plans/2026-03-19-evcode-gemini-live-verification-wave13-execution-plan.md",
+  "provider_probe": {
+    "command": "node apps/evcode/bin/evcode.js probe-providers --json --live",
+    "gemini": {
+      "status": "live_compatible",
+      "reason": "live probe completed",
+      "model": "gemini-2.5-pro",
+      "base_url": "https://right.codes/gemini/v1"
+    },
+    "codex": {
+      "status": "live_compatible",
+      "reason": "live probe completed"
+    },
+    "claude": {
+      "status": "live_probe_failed",
+      "reason": "provider_http_error:403:error code: 1010"
+    }
+  },
+  "governed_run": {
+    "command": "node apps/evcode/bin/evcode.js run --task \"Design a responsive frontend landing page with typography, spacing, motion, and visual polish\" --run-id wave13-gemini-demo --json",
+    "run_id": "wave13-gemini-demo",
+    "session_root": "outputs/runtime/vibe-sessions/wave13-gemini-demo",
+    "classification": {
+      "domain": "frontend_visual",
+      "risk": "low",
+      "ambiguity": "low",
+      "evidence": "visual"
+    },
+    "route_kind": "codex_with_specialists",
+    "requested_delegate_names": ["gemini"],
+    "active_delegate_names": ["gemini"],
+    "active_delegate_statuses": {
+      "gemini": "live_advisory_available"
+    },
+    "degraded_delegate_names": [],
+    "suppressed_delegate_names": ["claude"],
+    "gemini_artifacts": {
+      "task_packet": "outputs/runtime/vibe-sessions/wave13-gemini-demo/specialists/gemini-task-packet.json",
+      "request_preview": "outputs/runtime/vibe-sessions/wave13-gemini-demo/specialists/gemini-request-preview.json",
+      "result": "outputs/runtime/vibe-sessions/wave13-gemini-demo/specialists/gemini-result.json",
+      "integration_receipt": "outputs/runtime/vibe-sessions/wave13-gemini-demo/specialists/codex-integration-receipt.json"
+    }
+  },
+  "conclusion": {
+    "gemini_provider_live": true,
+    "gemini_routing_visible": true,
+    "gemini_active_in_governed_run": true,
+    "claude_not_required_for_this_task": true
+  }
+}

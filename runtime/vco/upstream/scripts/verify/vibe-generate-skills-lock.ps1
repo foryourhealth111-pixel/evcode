@@ -109,7 +109,7 @@ if (-not (Test-Path -LiteralPath $SkillsRoot)) {
 }
 
 $skills = @()
-$dirs = Get-ChildItem -LiteralPath $SkillsRoot -Directory | Sort-Object Name
+$dirs = Get-ChildItem -LiteralPath $SkillsRoot -Force -Directory | Sort-Object Name
 foreach ($dir in $dirs) {
     $info = Get-SkillDirHash -DirPath $dir.FullName
     $skillMdPath = Join-Path $dir.FullName "SKILL.md"

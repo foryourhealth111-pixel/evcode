@@ -1,0 +1,32 @@
+{
+  "run_id": "2026-03-19-evcode-local-usage-refresh-wave15",
+  "status": "pass",
+  "requirement_doc": "docs/requirements/2026-03-19-evcode-local-usage-refresh-wave15.md",
+  "execution_plan": "docs/plans/2026-03-19-evcode-local-usage-refresh-wave15-execution-plan.md",
+  "update_actions": {
+    "assembled_standard_dist": true,
+    "installed_local_wrappers": true,
+    "wrapper_install_dir": "/home/lqf/.local/bin"
+  },
+  "wrapper_targets": {
+    "evcode": "/home/lqf/table/table3/apps/evcode/bin/evcode.js",
+    "evcode_bench": "/home/lqf/table/table3/apps/evcode-bench/bin/evcode-bench.js"
+  },
+  "verification": {
+    "evcode_status": "pass",
+    "evcode_bench_status": "pass",
+    "evcode_doctor": "pass",
+    "evcode_live_probe": {
+      "codex": "live_compatible",
+      "gemini": "live_compatible",
+      "claude": "live_probe_failed"
+    }
+  },
+  "local_usage_commands": [
+    "evcode status --json",
+    "evcode doctor",
+    "evcode probe-providers --json --live",
+    "evcode run --task \"Design a responsive frontend landing page with typography, spacing, motion, and visual polish\"",
+    "evcode-bench status --json"
+  ]
+}

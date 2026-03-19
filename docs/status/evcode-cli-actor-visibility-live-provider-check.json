@@ -1,0 +1,59 @@
+{
+  "task": "evcode cli actor visibility live provider check",
+  "date": "2026-03-19",
+  "status": "partial_pass",
+  "configured_surface": {
+    "codex": {
+      "base_url": "https://right.codes/codex/v1",
+      "model": "gpt-5.4"
+    },
+    "claude": {
+      "base_url": "https://right.codes/claude/v1",
+      "model": "claude-opus-4-6"
+    },
+    "gemini": {
+      "base_url": "https://right.codes/gemini/v1",
+      "model": "gemini-3.1-pro-preview"
+    }
+  },
+  "live_probe": {
+    "codex": {
+      "status": "live_compatible",
+      "reason": "live probe completed"
+    },
+    "claude": {
+      "status": "live_probe_failed",
+      "reason": "provider_http_error:403 bad_response_status_code"
+    },
+    "gemini": {
+      "status": "live_probe_failed",
+      "reason": "provider_http_error:503 model_not_found for gemini-3.1-pro-preview"
+    }
+  },
+  "governed_fallback_runs": {
+    "claude_planning": {
+      "run_id": "live-claude-warning-proof",
+      "warning_visible": true,
+      "execution_outcome": "degraded_fallback_to_codex",
+      "runtime_summary": "outputs/runtime/vibe-sessions/live-claude-warning-proof/runtime-summary.json",
+      "runtime_events": "outputs/runtime/vibe-sessions/live-claude-warning-proof/runtime-events.jsonl"
+    },
+    "gemini_frontend_visual": {
+      "run_id": "live-gemini-warning-proof",
+      "warning_visible": true,
+      "execution_outcome": "degraded_fallback_to_codex",
+      "runtime_summary": "outputs/runtime/vibe-sessions/live-gemini-warning-proof/runtime-summary.json",
+      "runtime_events": "outputs/runtime/vibe-sessions/live-gemini-warning-proof/runtime-events.jsonl"
+    }
+  },
+  "hybrid_validator": {
+    "status": "fail",
+    "meaning": "governed routing and codex fallback invariants held, but live provider compatibility is not fully healthy for Claude/Gemini on the supplied RightCodes settings"
+  },
+  "conclusion": {
+    "actor_visibility": "pass",
+    "non_silent_fallback": "pass",
+    "codex_final_authority": "pass",
+    "external_provider_health": "fail_for_claude_and_gemini_under_current_settings"
+  }
+}

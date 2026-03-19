@@ -148,6 +148,273 @@ def write_text(path: Path, content: str) -> Path:
     return path
 
 
+def load_phase_cleanup_policy(repo_root: Path) -> dict[str, Any]:
+    policy_path = repo_root / "runtime" / "vco" / "upstream" / "config" / "phase-cleanup-policy.json"
+    return json.loads(policy_path.read_text(encoding="utf-8"))
+
+
+def protected_document_extensions(policy: dict[str, Any]) -> list[str]:
+    configured = policy.get("protected_document_policy", {}).get("extensions", [])
+    normalized: list[str] = []
+    for value in configured:
+        token = str(value).strip().lower()
+        if not token:
+            continue
+        if not token.startswith("."):
+            token = f".{token}"
+        if token not in normalized:
+            normalized.append(token)
+    return normalized
+
+
+def is_protected_document(path: Path, extensions: list[str]) -> bool:
+    return path.suffix.lower() in extensions
+
+
+def _portable_relative_path(path: Path, base_root: Path) -> str:
+    return os.path.relpath(path, base_root).replace(os.sep, "/")
+
+
+def snapshot_protected_documents(base_root: Path, roots: list[Path], extensions: list[str]) -> list[dict[str, Any]]:
+    items: list[dict[str, Any]] = []
+    seen_roots: set[str] = set()
+    for root in roots:
+        resolved_root = root.resolve()
+        root_key = str(resolved_root)
+        if root_key in seen_roots or not resolved_root.exists():
+            continue
+        seen_roots.add(root_key)
+        for file_path in resolved_root.rglob("*"):
+            if not file_path.is_file() or not is_protected_document(file_path, extensions):
+                continue
+            stat = file_path.stat()
+            items.append(
+                {
+                    "full_path": str(file_path.resolve()),
+                    "relative_path": _portable_relative_path(file_path.resolve(), base_root.resolve()),
+                    "root": str(resolved_root),
+                    "extension": file_path.suffix.lower(),
+                    "size_bytes": stat.st_size,
+                    "last_write_utc": datetime.fromtimestamp(stat.st_mtime, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }
+            )
+    items.sort(key=lambda item: item["relative_path"])
+    return items
+
+
+def build_protected_document_manifest(base_root: Path, tmp_root: Path, policy: dict[str, Any]) -> dict[str, Any]:
+    protected_policy = policy.get("protected_document_policy", {})
+    extensions = protected_document_extensions(policy)
+    roots = [base_root / str(rel_root) for rel_root in protected_policy.get("snapshot_roots", [])]
+    if tmp_root.exists() and all(tmp_root.resolve() != root.resolve() for root in roots):
+        roots.append(tmp_root)
+    snapshot = snapshot_protected_documents(base_root, roots, extensions)
+    tmp_items = [item for item in snapshot if path_is_within(Path(item["full_path"]), tmp_root)]
+    retained_items = [item for item in snapshot if not path_is_within(Path(item["full_path"]), tmp_root)]
+    return {
+        "snapshot": snapshot,
+        "tmp_items": tmp_items,
+        "retained_items": retained_items,
+        "summary": {
+            "protected_total": len(snapshot),
+            "tmp_protected_total": len(tmp_items),
+            "retained_outside_tmp_total": len(retained_items),
+        },
+    }
+
+
+def move_protected_documents_to_quarantine(tmp_root: Path, quarantine_root: Path, extensions: list[str]) -> list[dict[str, Any]]:
+    moved: list[dict[str, Any]] = []
+    if not tmp_root.exists():
+        return moved
+    for file_path in sorted(tmp_root.rglob("*")):
+        if not file_path.is_file() or not is_protected_document(file_path, extensions):
+            continue
+        relative_path = _portable_relative_path(file_path.resolve(), tmp_root.resolve())
+        target_path = quarantine_root / relative_path
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(file_path), str(target_path))
+        moved.append(
+            {
+                "original_path": str(file_path.resolve()),
+                "relative_path": relative_path,
+                "quarantine_path": str(target_path.resolve()),
+                "extension": target_path.suffix.lower(),
+            }
+        )
+    return moved
+
+
+def build_protected_document_post_checks(
+    manifest: dict[str, Any],
+    quarantined_items: list[dict[str, Any]] | None = None,
+    *,
+    preview_only: bool = False,
+) -> list[dict[str, Any]]:
+    assertions: list[dict[str, Any]] = []
+    for item in manifest["retained_items"]:
+        path = Path(item["full_path"])
+        assertions.append(
+            {
+                "pass": path.exists(),
+                "message": f"protected asset retained outside tmp: {item['relative_path']}",
+                "path": str(path),
+            }
+        )
+    if preview_only:
+        for item in manifest["tmp_items"]:
+            path = Path(item["full_path"])
+            assertions.append(
+                {
+                    "pass": path.exists(),
+                    "message": f"protected tmp asset preserved during preview: {item['relative_path']}",
+                    "path": str(path),
+                }
+            )
+        return assertions
+    for item in quarantined_items or []:
+        quarantine_path = Path(item["quarantine_path"])
+        assertions.append(
+            {
+                "pass": quarantine_path.exists(),
+                "message": f"protected tmp asset moved to quarantine: {item['relative_path']}",
+                "path": str(quarantine_path),
+            }
+        )
+    return assertions
+
+
+def execute_phase_cleanup(
+    *,
+    repo_root: Path,
+    artifacts_root: Path,
+    session_root: Path,
+    runtime_mode: str,
+    preview_only: bool = False,
+) -> dict[str, Any]:
+    policy = load_phase_cleanup_policy(repo_root)
+    protected_policy = policy.get("protected_document_policy", {})
+    extensions = protected_document_extensions(policy)
+    tmp_root = artifacts_root / ".tmp"
+    quarantine_root = artifacts_root / str(protected_policy.get("quarantine_root", "outputs/runtime/process-health/quarantine/protected-documents"))
+    manifest = build_protected_document_manifest(artifacts_root, tmp_root, policy)
+    manifest_path = write_json(session_root / "cleanup-protected-document-manifest.json", manifest)
+
+    tmp_file_count_before = sum(1 for path in tmp_root.rglob("*") if path.is_file()) if tmp_root.exists() else 0
+    quarantined_items: list[dict[str, Any]] = []
+    tmp_root_removed = False
+    temp_files_removed = 0
+
+    bounded_modes = {str(item) for item in policy.get("bounded_default_modes", [])}
+    cleanup_mode = "receipt_only"
+    if preview_only:
+        cleanup_mode = "preview_only"
+    elif tmp_root.exists():
+        quarantined_items = move_protected_documents_to_quarantine(tmp_root, quarantine_root, extensions)
+        shutil.rmtree(tmp_root)
+        tmp_root_removed = True
+        temp_files_removed = max(tmp_file_count_before - len(quarantined_items), 0)
+        cleanup_mode = "quarantine_only" if quarantined_items else "bounded_cleanup_executed"
+    elif runtime_mode in bounded_modes and manifest["summary"]["protected_total"]:
+        cleanup_mode = str(protected_policy.get("default_action_mode", "quarantine_only"))
+
+    quarantine_receipt_path = write_json(
+        session_root / "cleanup-protected-document-quarantine.json",
+        {
+            "run_id": session_root.name,
+            "preview_only": preview_only,
+            "quarantine_root": str(quarantine_root),
+            "items": quarantined_items,
+            "generated_at": utc_now(),
+        },
+    )
+    assertions = build_protected_document_post_checks(manifest, quarantined_items, preview_only=preview_only)
+    failure_count = sum(0 if item["pass"] else 1 for item in assertions)
+    cleanup_status = "ok" if failure_count == 0 else "degraded"
+    if failure_count and cleanup_mode != "preview_only":
+        cleanup_mode = "cleanup_degraded"
+    return {
+        "temp_files_removed": temp_files_removed,
+        "node_processes_cleaned": 0,
+        "cleanup_status": cleanup_status,
+        "cleanup_mode": cleanup_mode,
+        "policy_version": policy.get("version"),
+        "tmp_root": str(tmp_root),
+        "tmp_root_removed": tmp_root_removed,
+        "preview_only": preview_only,
+        "cleanup_steps": deepcopy(policy.get("cleanup_steps", [])),
+        "protected_document_summary": {
+            **manifest["summary"],
+            "quarantined_total": len(quarantined_items),
+            "quarantine_root": str(quarantine_root),
+        },
+        "post_cleanup_checks": {
+            "total": len(assertions),
+            "failure_count": failure_count,
+            "assertions": assertions,
+        },
+        "evidence": {
+            "manifest_path": str(manifest_path),
+            "quarantine_receipt_path": str(quarantine_receipt_path),
+        },
+        "generated_at": utc_now(),
+    }
+
+
+def _compact_text(value: Any, limit: int = 180) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    normalized = " ".join(text.split())
+    if len(normalized) <= limit:
+        return normalized
+    return normalized[: limit - 3].rstrip() + "..."
+
+
+class RuntimeEventRecorder:
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text("", encoding="utf-8")
+        self.seq = 0
+
+    def emit(
+        self,
+        *,
+        actor: str,
+        state: str,
+        phase: str,
+        message: str,
+        content_kind: str | None = None,
+        content: Any | None = None,
+        refs: list[str] | None = None,
+        meta: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        self.seq += 1
+        event = {
+            "seq": self.seq,
+            "ts": utc_now(),
+            "phase": phase,
+            "actor": actor,
+            "state": state,
+            "message": message,
+        }
+        compact_content = _compact_text(content)
+        if content_kind:
+            event["content_kind"] = content_kind
+        if compact_content:
+            event["content"] = compact_content
+        if refs:
+            event["refs"] = deepcopy(refs)
+        if meta:
+            event["meta"] = deepcopy(meta)
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(event, ensure_ascii=False) + "\n")
+        return event
+
+
 def materialize_benchmark_artifact_handoff(
     requested_artifacts_root: Path,
     effective_artifacts_root: Path,
@@ -614,6 +881,7 @@ def write_specialist_artifacts(
     assistant_policy: dict[str, Any],
     provider_catalog: dict[str, dict[str, Any]],
     authoritative_context_refs: list[str],
+    event_recorder: RuntimeEventRecorder,
 ) -> dict[str, Any]:
     specialist_dir = session_root / "specialists"
     specialist_dir.mkdir(parents=True, exist_ok=True)
@@ -630,6 +898,60 @@ def write_specialist_artifacts(
         session_root / "specialist-routing-receipt.json",
         route,
     )
+    event_recorder.emit(
+        actor="route",
+        state="CLASSIFIED",
+        phase="plan_execute",
+        message=(
+            f"task classified as {route['classification']['domain']} "
+            f"(route={route['route_kind']}, final_executor={route['final_executor']})"
+        ),
+        content_kind="route",
+        refs=[str(route_receipt_path)],
+        meta={
+            "domain": route["classification"]["domain"],
+            "route_kind": route["route_kind"],
+            "risk": route["classification"]["risk"],
+            "evidence": route["classification"]["evidence"],
+        },
+    )
+    event_recorder.emit(
+        actor="codex",
+        state="ACTIVE",
+        phase="plan_execute",
+        message="codex-led governed execution authority is active",
+        content_kind="status",
+        refs=[str(route_receipt_path)],
+    )
+    for delegate in route.get("requested_delegates", []):
+        event_recorder.emit(
+            actor=delegate["assistant_name"],
+            state="REQUESTED",
+            phase="plan_execute",
+            message=delegate.get("purpose", "specialist requested"),
+            content_kind="status",
+            content=delegate.get("reason"),
+            refs=[str(route_receipt_path)],
+        )
+    for delegate in route.get("suppressed_delegates", []):
+        event_recorder.emit(
+            actor=delegate["assistant_name"],
+            state="SUPPRESSED",
+            phase="plan_execute",
+            message=delegate.get("reason", "specialist suppressed by routing policy"),
+            content_kind="status",
+            refs=[str(route_receipt_path)],
+        )
+    for delegate in route.get("degraded_delegates", []):
+        event_recorder.emit(
+            actor=delegate["assistant_name"],
+            state="DEGRADED",
+            phase="plan_execute",
+            message=delegate.get("status", "specialist degraded before invocation"),
+            content_kind="warning",
+            content=delegate.get("reason"),
+            refs=[str(route_receipt_path)],
+        )
 
     task_packets, exploration_briefs = build_specialist_delegation_payloads(config, route, authoritative_context_refs)
     task_packet_paths: dict[str, str] = {}
@@ -662,8 +984,24 @@ def write_specialist_artifacts(
             build_adapter_request_preview(delegation_payload, provider_catalog[assistant_name]),
         )
         request_preview_paths[assistant_name] = str(request_preview_path)
+        event_recorder.emit(
+            actor=assistant_name,
+            state="DISPATCHING",
+            phase="plan_execute",
+            message="specialist request preview recorded",
+            content_kind="status",
+            refs=[str(request_preview_path)],
+        )
 
         if assistant_name in active_lookup:
+            event_recorder.emit(
+                actor=assistant_name,
+                state="ACTIVE",
+                phase="plan_execute",
+                message="live specialist invocation in progress",
+                content_kind="status",
+                refs=[str(request_preview_path)],
+            )
             try:
                 raw_payload = invoke_specialist_json(delegation_payload, provider_catalog[assistant_name])
                 result_packet = normalize_live_result(delegation_payload, provider_catalog[assistant_name], raw_payload)
@@ -692,6 +1030,36 @@ def write_specialist_artifacts(
             )
         result_path = write_json(specialist_dir / f"{assistant_name}-result.json", result_packet)
         result_paths[assistant_name] = str(result_path)
+        if result_packet.get("status") == "completed_live_advisory":
+            event_recorder.emit(
+                actor=assistant_name,
+                state="COMPLETED",
+                phase="plan_execute",
+                message=f"{assistant_name} advisory completed",
+                content_kind="result_summary",
+                content=result_packet.get("summary"),
+                refs=[str(result_path)],
+            )
+        elif assistant_name in active_lookup:
+            event_recorder.emit(
+                actor=assistant_name,
+                state="DEGRADED",
+                phase="plan_execute",
+                message=result_packet.get("status", "specialist degraded during invocation"),
+                content_kind="warning",
+                content=(result_packet.get("unresolved_risks") or [result_packet.get("summary")])[0],
+                refs=[str(result_path)],
+            )
+        else:
+            event_recorder.emit(
+                actor=assistant_name,
+                state="DEGRADED",
+                phase="plan_execute",
+                message=result_packet.get("status", "specialist live invocation unavailable"),
+                content_kind="result_summary",
+                content=result_packet.get("summary"),
+                refs=[str(result_path)],
+            )
         if assistant_name in active_lookup and specialist_result_requires_warning(result_packet):
             warning_event = build_fallback_warning(
                 assistant_name=assistant_name,
@@ -748,6 +1116,18 @@ def write_specialist_artifacts(
         specialist_dir / "codex-integration-receipt.json",
         integration_receipt,
     )
+    event_recorder.emit(
+        actor="codex",
+        state="INTEGRATING",
+        phase="plan_execute",
+        message="codex is integrating specialist outputs into governed execution",
+        content_kind="integration",
+        content=(
+            f"requested={','.join(integration_receipt['requested_specialists']) or 'none'}; "
+            f"degraded={','.join(integration_receipt['degraded_specialists']) or 'none'}"
+        ),
+        refs=[str(integration_receipt_path)],
+    )
     return {
         "assistant_policy_snapshot": str(assistant_policy_path),
         "assistant_provider_snapshot": str(provider_snapshot_path),
@@ -777,6 +1157,15 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
 
     session_root = effective_artifacts_root / "outputs" / "runtime" / "vibe-sessions" / config.run_id
     session_root.mkdir(parents=True, exist_ok=True)
+    event_recorder = RuntimeEventRecorder(session_root / "runtime-events.jsonl")
+    event_recorder.emit(
+        actor="system",
+        state="RUN_START",
+        phase="skeleton_check",
+        message="governed runtime session started",
+        content_kind="status",
+        content=config.task,
+    )
 
     existing = detect_existing_artifacts(effective_artifacts_root)
     skeleton_receipt = {
@@ -791,9 +1180,25 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
         "generated_at": utc_now(),
     }
     skeleton_receipt_path = write_json(session_root / "skeleton-receipt.json", skeleton_receipt)
+    event_recorder.emit(
+        actor="system",
+        state="SKELETON_READY",
+        phase="skeleton_check",
+        message="skeleton check receipt written",
+        content_kind="status",
+        refs=[str(skeleton_receipt_path)],
+    )
 
     intent = build_intent_contract(config)
     intent_path = write_json(session_root / "intent-contract.json", intent)
+    event_recorder.emit(
+        actor="system",
+        state="INTENT_FROZEN",
+        phase="deep_interview",
+        message="intent contract frozen",
+        content_kind="status",
+        refs=[str(intent_path)],
+    )
 
     requirement_doc_path = effective_artifacts_root / "docs" / "requirements" / f"{date}-{slug}.md"
     write_text(requirement_doc_path, build_requirement_doc(config, intent))
@@ -806,6 +1211,14 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
             "generated_at": utc_now(),
         },
     )
+    event_recorder.emit(
+        actor="system",
+        state="REQUIREMENT_FROZEN",
+        phase="requirement_doc",
+        message="requirement document written",
+        content_kind="status",
+        refs=[str(requirement_doc_path), str(requirement_receipt_path)],
+    )
 
     execution_plan_path = effective_artifacts_root / "docs" / "plans" / f"{date}-{slug}-execution-plan.md"
     write_text(execution_plan_path, build_execution_plan(config, intent, requirement_doc_path))
@@ -817,6 +1230,14 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
             "internal_grade": intent["internal_grade"],
             "generated_at": utc_now(),
         },
+    )
+    event_recorder.emit(
+        actor="system",
+        state="PLAN_READY",
+        phase="xl_plan",
+        message="execution plan written",
+        content_kind="status",
+        refs=[str(execution_plan_path), str(execution_plan_receipt_path)],
     )
 
     provider_policy_snapshot_path = None
@@ -849,6 +1270,7 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
         assistant_policy=assistant_policy,
         provider_catalog=provider_catalog,
         authoritative_context_refs=authoritative_context_refs,
+        event_recorder=event_recorder,
     )
     runtime_route = deepcopy(route)
     runtime_route["degraded_delegates"] = specialist_artifacts["runtime_degraded_delegates"]
@@ -897,16 +1319,38 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
                 "generated_at": utc_now(),
             },
         )
+    event_recorder.emit(
+        actor="codex",
+        state="COMPLETED",
+        phase="plan_execute",
+        message=f"governed execution phase closed with outcome={execution_outcome}",
+        content_kind="status",
+        refs=[str(execute_receipt_path)],
+    )
 
+    cleanup_payload = execute_phase_cleanup(
+        repo_root=config.repo_root,
+        artifacts_root=effective_artifacts_root,
+        session_root=session_root,
+        runtime_mode=config.mode,
+    )
     cleanup_receipt_path = write_json(
         session_root / "cleanup-receipt.json",
         {
             "run_id": config.run_id,
-            "temp_files_removed": 0,
-            "node_processes_cleaned": 0,
-            "cleanup_status": "ok",
-            "generated_at": utc_now(),
+            **cleanup_payload,
         },
+    )
+    event_recorder.emit(
+        actor="system",
+        state="CLEANUP_OK" if cleanup_payload["cleanup_status"] == "ok" else "CLEANUP_DEGRADED",
+        phase="phase_cleanup",
+        message=(
+            "phase cleanup receipt written "
+            f"(mode={cleanup_payload['cleanup_mode']}, failures={cleanup_payload['post_cleanup_checks']['failure_count']})"
+        ),
+        content_kind="status",
+        refs=[str(cleanup_receipt_path)],
     )
 
     summary = {
@@ -948,8 +1392,13 @@ def write_runtime_session(config: GovernedRuntimeConfig) -> dict[str, Any]:
             "requested_runtime_summary": None,
             "provider_policy_snapshot": str(provider_policy_snapshot_path) if provider_policy_snapshot_path else None,
             "cleanup_receipt": str(cleanup_receipt_path),
+            "runtime_events": str(event_recorder.path),
         },
         "specialist_routing": runtime_route,
+        "telemetry": {
+            "runtime_events_path": str(event_recorder.path),
+            "event_count": event_recorder.seq,
+        },
     }
     summary_path = write_json(session_root / "runtime-summary.json", summary)
     handoff_artifacts = None

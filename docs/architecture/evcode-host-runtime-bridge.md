@@ -81,6 +81,25 @@ The core rule is:
 - Codex host owns UI and execution shell
 - EvCode owns the bridge between them
 
+Compatibility note:
+
+- superpowers or similar workflow layers may shape process discipline,
+- but they must feed the existing governed runtime rather than creating a parallel runtime surface.
+
+Required ownership split:
+
+- canonical router: route authority
+- VCO governed runtime: stage order, requirement freeze, plan traceability, execution receipts, cleanup receipts
+- host bridge: hidden hook wiring and artifact persistence
+- superpowers or similar workflow layers: discipline and workflow advice only
+
+Forbidden outcomes:
+
+- a second visible startup/runtime prompt surface
+- a second requirement freeze surface
+- a second execution-plan surface
+- a second route authority
+
 ## 5. Hook Mapping
 
 ### 5.1 `user_prompt_submit`
@@ -195,6 +214,7 @@ EvCode patch layer is not allowed to own:
 - a second chat loop
 - a second route authority
 - a wrapper-first execution model
+- a second visible requirement / plan truth surface
 
 ## 10. Failure And Degradation Rules
 

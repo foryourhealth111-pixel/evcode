@@ -1,0 +1,42 @@
+{
+  "run_id": "2026-03-19-evcode-gemini-cli-display-simulation-wave14",
+  "status": "pass",
+  "requirement_doc": "docs/requirements/2026-03-19-evcode-gemini-cli-display-simulation-wave14.md",
+  "execution_plan": "docs/plans/2026-03-19-evcode-gemini-cli-display-simulation-wave14-execution-plan.md",
+  "validated_run": {
+    "run_id": "wave14-gemini-cli-display",
+    "task": "Design a responsive frontend landing page with typography, spacing, motion, and visual polish",
+    "route_kind": "codex_with_specialists",
+    "domain": "frontend_visual",
+    "execution_outcome": "normal"
+  },
+  "tty_live_surface": {
+    "actors": {
+      "CODX": "ACTIVE",
+      "CLAU": "SUPPRESSED",
+      "GEMI": "ACTIVE"
+    },
+    "gemini_message": "live specialist invocation in progress"
+  },
+  "tty_trace_surface": {
+    "actors": {
+      "CODX": "COMPLETED",
+      "CLAU": "SUPPRESSED",
+      "GEMI": "COMPLETED"
+    },
+    "gemini_message_prefix": "Provided a detailed visual plan"
+  },
+  "artifact_consistency": {
+    "routing_receipt_has_gemini_requested": true,
+    "routing_receipt_has_gemini_active": true,
+    "runtime_events_show_completion": true,
+    "gemini_result_exists": true,
+    "cleanup_status_ok": true
+  },
+  "conclusion": {
+    "design_call_chain_normal": true,
+    "gemini_cli_display_normal": true,
+    "gemini_visible_during_execution": true,
+    "gemini_visible_in_trace": true
+  }
+}

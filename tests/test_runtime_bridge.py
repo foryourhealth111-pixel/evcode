@@ -16,7 +16,7 @@ sys.path.insert(0, str(REPO_ROOT / 'packages' / 'specialist-routing' / 'python')
 
 from evcode_assistant_adapters import resolve_assistant_provider_catalog
 from evcode_specialist_routing import load_assistant_policy, load_routing_policy, resolve_specialist_route
-from runtime_lib import GovernedRuntimeConfig, build_specialist_delegation_payloads, normalize_live_result
+from runtime_lib import GovernedRuntimeConfig, build_specialist_delegation_payloads, execute_phase_cleanup, normalize_live_result
 EXPECTED_STAGE_ORDER = [
     "skeleton_check",
     "deep_interview",
@@ -105,6 +105,64 @@ class RuntimeBridgeTests(unittest.TestCase):
         self.assertEqual("codex", result["recommended_next_actor"])
         self.assertEqual("figma_context", result["capability_requests"][0]["capability"])
 
+    def test_phase_cleanup_quarantines_protected_tmp_documents_and_retains_external_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            artifacts_root = Path(tempdir)
+            session_root = artifacts_root / "outputs" / "runtime" / "vibe-sessions" / "cleanup-proof"
+            session_root.mkdir(parents=True, exist_ok=True)
+            retained_pdf = artifacts_root / "docs" / "reference-manual.pdf"
+            retained_pdf.parent.mkdir(parents=True, exist_ok=True)
+            retained_pdf.write_text("pdf", encoding="utf-8")
+            quarantined_docx = artifacts_root / ".tmp" / "nested" / "重庆方案-正式版.docx"
+            quarantined_xlsx = artifacts_root / ".tmp" / "nested" / "budget.xlsx"
+            scratch_note = artifacts_root / ".tmp" / "nested" / "notes.txt"
+            for path_obj, content in ((quarantined_docx, "docx"), (quarantined_xlsx, "xlsx"), (scratch_note, "note")):
+                path_obj.parent.mkdir(parents=True, exist_ok=True)
+                path_obj.write_text(content, encoding="utf-8")
+
+            receipt = execute_phase_cleanup(
+                repo_root=REPO_ROOT,
+                artifacts_root=artifacts_root,
+                session_root=session_root,
+                runtime_mode="interactive_governed",
+            )
+
+            self.assertEqual("ok", receipt["cleanup_status"])
+            self.assertEqual("quarantine_only", receipt["cleanup_mode"])
+            self.assertFalse((artifacts_root / ".tmp").exists())
+            quarantine_root = artifacts_root / "outputs" / "runtime" / "process-health" / "quarantine" / "protected-documents"
+            self.assertTrue((quarantine_root / "nested" / "重庆方案-正式版.docx").exists())
+            self.assertTrue((quarantine_root / "nested" / "budget.xlsx").exists())
+            self.assertTrue(retained_pdf.exists())
+            self.assertEqual(2, receipt["protected_document_summary"]["tmp_protected_total"])
+            self.assertEqual(2, receipt["protected_document_summary"]["quarantined_total"])
+            self.assertEqual(0, receipt["post_cleanup_checks"]["failure_count"])
+
+    def test_phase_cleanup_preview_only_preserves_protected_tmp_documents(self) -> None:
+        with tempfile.TemporaryDirectory() as tempdir:
+            artifacts_root = Path(tempdir)
+            session_root = artifacts_root / "outputs" / "runtime" / "vibe-sessions" / "cleanup-preview"
+            session_root.mkdir(parents=True, exist_ok=True)
+            preview_pdf = artifacts_root / ".tmp" / "方案预览.pdf"
+            preview_pdf.parent.mkdir(parents=True, exist_ok=True)
+            preview_pdf.write_text("pdf", encoding="utf-8")
+
+            receipt = execute_phase_cleanup(
+                repo_root=REPO_ROOT,
+                artifacts_root=artifacts_root,
+                session_root=session_root,
+                runtime_mode="interactive_governed",
+                preview_only=True,
+            )
+
+            self.assertEqual("preview_only", receipt["cleanup_mode"])
+            self.assertEqual("ok", receipt["cleanup_status"])
+            self.assertTrue(preview_pdf.exists())
+            self.assertFalse(receipt["tmp_root_removed"])
+            self.assertEqual(1, receipt["protected_document_summary"]["tmp_protected_total"])
+            self.assertEqual(0, receipt["protected_document_summary"]["quarantined_total"])
+            self.assertEqual(0, receipt["post_cleanup_checks"]["failure_count"])
+
     def test_standard_run_writes_governed_and_specialist_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
             completed = subprocess.run(
@@ -123,6 +181,10 @@ class RuntimeBridgeTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
                 check=True,
+                env={
+                    **os.environ,
+                    "EVCODE_ENABLE_LIVE_SPECIALISTS": "0",
+                },
             )
             payload = json.loads(completed.stdout)
             self.assertEqual("interactive_governed", payload["mode"])
@@ -135,6 +197,7 @@ class RuntimeBridgeTests(unittest.TestCase):
             assistant_policy = Path(payload["artifacts"]["assistant_policy_snapshot"])
             codex_integration = Path(payload["artifacts"]["codex_integration_receipt"])
             capability_proxy = Path(payload["artifacts"]["capability_proxy_receipt"])
+            runtime_events = Path(payload["artifacts"]["runtime_events"])
             self.assertTrue(requirement_doc.exists())
             self.assertTrue(execution_plan.exists())
             self.assertTrue(cleanup_receipt.exists())
@@ -142,6 +205,14 @@ class RuntimeBridgeTests(unittest.TestCase):
             self.assertTrue(assistant_policy.exists())
             self.assertTrue(codex_integration.exists())
             self.assertTrue(capability_proxy.exists())
+            self.assertTrue(runtime_events.exists())
+            cleanup_payload = json.loads(cleanup_receipt.read_text(encoding="utf-8"))
+            self.assertIn("protected_document_summary", cleanup_payload)
+            self.assertIn("evidence", cleanup_payload)
+            event_rows = [json.loads(line) for line in runtime_events.read_text(encoding="utf-8").splitlines() if line.strip()]
+            self.assertGreater(payload["telemetry"]["event_count"], 0)
+            self.assertTrue(any(row["actor"] == "route" for row in event_rows))
+            self.assertTrue(any(row["actor"] == "codex" for row in event_rows))
             route_payload = json.loads(specialist_route.read_text(encoding="utf-8"))
             self.assertTrue(route_payload["codex_final_authority"])
             if "claude" in payload["artifacts"]["specialist_exploration_briefs"]:

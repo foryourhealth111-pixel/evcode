@@ -10,7 +10,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 import re
 
-import toml
+try:
+    import tomllib as toml_reader
+except ModuleNotFoundError:
+    try:
+        import toml as toml_reader
+    except ModuleNotFoundError:
+        from pip._vendor import tomli as toml_reader
 
 
 def utc_now() -> str:
@@ -52,7 +58,7 @@ def load_source_codex_config(source_codex_home: Path | None) -> dict:
     config_path = source_codex_home / "config.toml"
     if not config_path.exists():
         return {}
-    return toml.loads(config_path.read_text(encoding="utf-8"))
+    return toml_reader.loads(config_path.read_text(encoding="utf-8"))
 
 
 def format_toml_value(value: object) -> str:

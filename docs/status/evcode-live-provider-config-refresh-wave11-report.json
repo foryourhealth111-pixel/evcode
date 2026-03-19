@@ -1,0 +1,69 @@
+{
+  "run_id": "2026-03-19-evcode-live-provider-config-refresh-wave11",
+  "status": "partial_pass",
+  "requirement_doc": "docs/requirements/2026-03-19-evcode-live-provider-config-refresh-wave11.md",
+  "execution_plan": "docs/plans/2026-03-19-evcode-live-provider-config-refresh-wave11-execution-plan.md",
+  "provider_setup": {
+    "active_env_source": "repo_local_override",
+    "repo_local_env_path": "config/assistant-providers.env.local",
+    "live_specialists_opt_in": true,
+    "api_key_present": true,
+    "loaded_keys": [
+      "EVCODE_ENABLE_LIVE_SPECIALISTS",
+      "EVCODE_RIGHTCODES_API_KEY",
+      "EVCODE_CODEX_BASE_URL",
+      "EVCODE_CODEX_MODEL",
+      "EVCODE_CLAUDE_BASE_URL",
+      "EVCODE_CLAUDE_MODEL",
+      "EVCODE_GEMINI_BASE_URL",
+      "EVCODE_GEMINI_MODEL"
+    ]
+  },
+  "resolved_assistants": {
+    "codex": {
+      "base_url": "https://right.codes/codex/v1",
+      "model": "gpt-5.4",
+      "api_key_present": true
+    },
+    "claude": {
+      "base_url": "https://right.codes/claude-aws",
+      "model": "claude-opus-4-6",
+      "api_key_present": true
+    },
+    "gemini": {
+      "base_url": "https://right.codes/gemini/v1",
+      "model": "gemini-2.5-pro",
+      "api_key_present": true
+    }
+  },
+  "verification": {
+    "status_command": "node apps/evcode/bin/evcode.js status --json",
+    "probe_command": "node apps/evcode/bin/evcode.js probe-providers --json",
+    "live_probe_command": "node apps/evcode/bin/evcode.js probe-providers --json --live"
+  },
+  "probe_results": {
+    "codex": {
+      "configured_status": "ready_for_live_probe",
+      "live_status": "live_compatible",
+      "reason": "live probe completed"
+    },
+    "claude": {
+      "configured_status": "ready_for_live_probe",
+      "live_status": "live_probe_failed",
+      "reason": "provider_http_error:403:error code: 1010"
+    },
+    "gemini": {
+      "configured_status": "ready_for_live_probe",
+      "live_status": "live_compatible",
+      "reason": "live probe completed"
+    }
+  },
+  "result": {
+    "endpoint_refresh": "pass",
+    "live_specialist_opt_in_surface": "pass",
+    "codex_live_probe": "pass",
+    "gemini_live_probe": "pass",
+    "claude_live_probe": "fail"
+  },
+  "remaining_blocker": "Claude still returns provider_http_error:403:error code: 1010 on the claude-aws endpoint under the supplied key and current probe path."
+}

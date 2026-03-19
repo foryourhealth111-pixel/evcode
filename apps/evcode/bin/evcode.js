@@ -2,8 +2,9 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
-const { spawnSync } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 const providerRuntime = require(path.join(__dirname, "../../../packages/provider-runtime/src/local_provider_env.js"));
+const runtimeDisplay = require(path.join(__dirname, "../lib/runtime_display.js"));
 
 function loadJson(root, relativePath) {
   return JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
@@ -51,9 +52,28 @@ function extractProviderBaseUrl(text, providerName) {
   return null;
 }
 
-function resolveSourceCodexHome() {
+function isSelfManagedCodexHome(root, candidate) {
+  if (!candidate) {
+    return false;
+  }
+  const resolvedCandidate = path.resolve(candidate);
+  const distRoot = path.resolve(root, ".evcode-dist");
+  const relativeToDist = path.relative(distRoot, resolvedCandidate);
+  if (relativeToDist === "standard/codex-home" || relativeToDist === "benchmark/codex-home") {
+    return true;
+  }
+  const parentName = path.basename(path.dirname(resolvedCandidate));
+  const baseName = path.basename(resolvedCandidate);
+  return baseName === "codex-home" && (parentName === "standard" || parentName === "benchmark");
+}
+
+function resolveSourceCodexHome(root) {
   const configured = process.env.EVCODE_SOURCE_CODEX_HOME || process.env.CODEX_HOME;
-  if (configured && fs.existsSync(path.join(configured, "config.toml"))) {
+  if (
+    configured
+    && !isSelfManagedCodexHome(root, configured)
+    && fs.existsSync(path.join(configured, "config.toml"))
+  ) {
     return configured;
   }
   const fallback = path.join(os.homedir(), ".codex");
@@ -76,7 +96,7 @@ function buildAssemblyArgs(root, passthroughArgs = []) {
     ...passthroughArgs
   ];
   if (!passthroughArgs.includes("--source-codex-home")) {
-    const sourceCodexHome = resolveSourceCodexHome();
+    const sourceCodexHome = resolveSourceCodexHome(root);
     if (sourceCodexHome) {
       args.push("--source-codex-home", sourceCodexHome);
     }
@@ -159,9 +179,32 @@ function buildProviderSetup(root) {
 }
 
 function printRunUsage(commandName) {
-  console.log(`Usage: ${commandName} run --task <task> [--workspace PATH] [--artifacts-root PATH]${commandName === "evcode-bench" ? " [--result-json PATH]" : ""} [--run-id ID]`);
+  console.log(`Usage: ${commandName} run --task <task> [--workspace PATH] [--artifacts-root PATH] [--run-id ID] [--trace] [--json]`);
 }
 
+function printTraceUsage(commandName) {
+  console.log(`Usage: ${commandName} trace <run-id> [--artifacts-root PATH] [--json]`);
+}
+
+function hasFlag(args, name) {
+  return args.includes(name);
+}
+
+function valueForFlag(args, name, fallback = "") {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : fallback;
+}
+
+function printWarningsFromPayload(payload) {
+  if (!Array.isArray(payload?.warnings)) {
+    return;
+  }
+  for (const warning of payload.warnings) {
+    const assistantName = warning.assistant_name || "specialist";
+    const message = warning.message || `${assistantName} failed; continuing in degraded mode.`;
+    process.stderr.write(`Warning: ${message}\n`);
+  }
+}
 
 function doctor(root) {
   const hostBinary = process.env.EVCODE_HOST_BIN || "codex";
@@ -180,7 +223,7 @@ function doctor(root) {
     "scripts/build/assemble_distribution.py"
   ];
   const missing = required.filter((item) => !fs.existsSync(path.join(root, item)));
-  const sourceCodexHome = resolveSourceCodexHome();
+  const sourceCodexHome = resolveSourceCodexHome(root);
   const assembled = readAssembledConfig(root);
   const alignedWithSource = Boolean(
     sourceCodexHome &&
@@ -230,7 +273,7 @@ function status(root) {
     specialist_rollout_phase: assistantPolicy.rollout_phase,
     assistants: Object.keys(assistantPolicy.assistants),
     assembled_distribution_exists: fs.existsSync(path.join(root, ".evcode-dist", "standard", "bin", "evcode")),
-    source_codex_home: resolveSourceCodexHome(),
+    source_codex_home: resolveSourceCodexHome(root),
     bundled_host_available: Boolean(resolveBundledHost(root)),
     baseline_surface: buildBaselineSurface(root, profile),
     provider_setup: buildProviderSetup(root),
@@ -241,44 +284,32 @@ function status(root) {
   };
 }
 
-function run(root) {
-  const args = process.argv.slice(3);
-  const taskIndex = args.indexOf("--task");
-  const task = taskIndex >= 0 ? args[taskIndex + 1] : "";
-  if (args.includes("--help") || args.includes("-h")) {
-    printRunUsage("evcode");
-    process.exit(0);
-  }
-  if (!task) {
-    console.error("Missing --task for run");
-    process.exit(1);
-  }
-  const workspaceIndex = args.indexOf("--workspace");
-  const artifactsRootIndex = args.indexOf("--artifacts-root");
-  const runIdIndex = args.indexOf("--run-id");
-  const workspace = workspaceIndex >= 0 ? args[workspaceIndex + 1] : root;
-  const artifactsRoot = artifactsRootIndex >= 0 ? args[artifactsRootIndex + 1] : root;
-  const runId = runIdIndex >= 0 ? args[runIdIndex + 1] : "";
+function buildRunCommand(root, options) {
+  return [
+    path.join(root, "scripts/runtime/run_governed_runtime.py"),
+    "--task",
+    options.task,
+    "--mode",
+    "interactive_governed",
+    "--channel",
+    "standard",
+    "--profile",
+    "standard",
+    "--repo-root",
+    root,
+    "--workspace",
+    options.workspace,
+    "--artifacts-root",
+    options.artifactsRoot,
+    "--run-id",
+    options.runId,
+  ];
+}
+
+function runJson(root, options) {
   const result = spawnSync(
     "python3",
-    [
-      path.join(root, "scripts/runtime/run_governed_runtime.py"),
-      "--task",
-      task,
-      "--mode",
-      "interactive_governed",
-      "--channel",
-      "standard",
-      "--profile",
-      "standard",
-      "--repo-root",
-      root,
-      "--workspace",
-      workspace,
-      "--artifacts-root",
-      artifactsRoot,
-      ...(runId ? ["--run-id", runId] : []),
-    ],
+    buildRunCommand(root, options),
     { encoding: "utf8" }
   );
   if (result.status !== 0) {
@@ -287,17 +318,122 @@ function run(root) {
   }
   try {
     const payload = JSON.parse(result.stdout);
-    if (Array.isArray(payload.warnings)) {
-      for (const warning of payload.warnings) {
-        const assistantName = warning.assistant_name || "specialist";
-        const message = warning.message || `${assistantName} failed; continuing in degraded mode.`;
-        process.stderr.write(`Warning: ${message}\n`);
-      }
-    }
+    printWarningsFromPayload(payload);
   } catch (error) {
     // Preserve stdout passthrough when the child output is not JSON.
   }
   process.stdout.write(result.stdout);
+}
+
+function clearScreen() {
+  process.stdout.write("\u001b[2J\u001b[H");
+}
+
+async function runInteractive(root, options) {
+  const sessionRoot = runtimeDisplay.resolveSessionRoot({
+    root,
+    artifactsRoot: options.artifactsRoot,
+    runId: options.runId,
+  });
+  const eventsPath = path.join(sessionRoot, "runtime-events.jsonl");
+  const child = spawn("python3", buildRunCommand(root, options), {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let stdout = "";
+  let stderr = "";
+  let events = [];
+  let summary = null;
+
+  const refreshEvents = () => {
+    const nextEvents = runtimeDisplay.loadRuntimeEvents(eventsPath);
+    if (nextEvents.length) {
+      events = nextEvents;
+    }
+    if (process.stdout.isTTY && !options.trace) {
+      clearScreen();
+      const text = runtimeDisplay.renderRuntimeView(summary, events, {
+        isTTY: true,
+        noColor: options.noColor,
+        context: { runId: options.runId },
+      });
+      process.stdout.write(`${text}\n`);
+    }
+  };
+
+  const pollHandle = setInterval(refreshEvents, 120);
+  child.stdout.on("data", (chunk) => {
+    stdout += chunk.toString();
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk.toString();
+  });
+
+  const exitCode = await new Promise((resolve) => child.on("close", resolve));
+  clearInterval(pollHandle);
+  refreshEvents();
+
+  if (stderr) {
+    process.stderr.write(stderr);
+  }
+  if (exitCode !== 0) {
+    if (stdout) {
+      process.stdout.write(stdout);
+    }
+    process.exit(exitCode || 1);
+  }
+
+  try {
+    summary = JSON.parse(stdout);
+  } catch (error) {
+    process.stdout.write(stdout);
+    return;
+  }
+
+  const finalEvents = events.length
+    ? events
+    : runtimeDisplay.loadRuntimeEvents(summary?.artifacts?.runtime_events || eventsPath);
+  const renderedEvents = finalEvents.length ? finalEvents : runtimeDisplay.synthesizeEventsFromSummary(summary);
+  const text = runtimeDisplay.renderRuntimeView(summary, renderedEvents, {
+    isTTY: process.stdout.isTTY,
+    noColor: options.noColor,
+    trace: options.trace,
+    context: { runId: options.runId },
+  });
+
+  if (process.stdout.isTTY && !options.trace) {
+    clearScreen();
+  }
+  process.stdout.write(`${text}\n`);
+}
+
+async function run(root) {
+  const args = process.argv.slice(3);
+  const task = valueForFlag(args, "--task");
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+    printRunUsage("evcode");
+    process.exit(0);
+  }
+  if (!task) {
+    console.error("Missing --task for run");
+    process.exit(1);
+  }
+  const options = {
+    task,
+    workspace: valueForFlag(args, "--workspace", root),
+    artifactsRoot: valueForFlag(args, "--artifacts-root", root),
+    runId: valueForFlag(args, "--run-id", runtimeDisplay.createRunId("evcode-run")),
+    trace: hasFlag(args, "--trace"),
+    json: hasFlag(args, "--json"),
+    noColor: hasFlag(args, "--no-color"),
+  };
+
+  if (options.json || (!options.trace && !process.stdout.isTTY)) {
+    runJson(root, options);
+    return;
+  }
+
+  await runInteractive(root, options);
 }
 
 function assemble(root) {
@@ -313,13 +449,7 @@ function assemble(root) {
   }
   try {
     const payload = JSON.parse(result.stdout);
-    if (Array.isArray(payload.warnings)) {
-      for (const warning of payload.warnings) {
-        const assistantName = warning.assistant_name || "specialist";
-        const message = warning.message || `${assistantName} failed; continuing in degraded mode.`;
-        process.stderr.write(`Warning: ${message}\n`);
-      }
-    }
+    printWarningsFromPayload(payload);
   } catch (error) {
     // Preserve stdout passthrough when the child output is not JSON.
   }
@@ -342,13 +472,7 @@ function hostBuild(root) {
   }
   try {
     const payload = JSON.parse(result.stdout);
-    if (Array.isArray(payload.warnings)) {
-      for (const warning of payload.warnings) {
-        const assistantName = warning.assistant_name || "specialist";
-        const message = warning.message || `${assistantName} failed; continuing in degraded mode.`;
-        process.stderr.write(`Warning: ${message}\n`);
-      }
-    }
+    printWarningsFromPayload(payload);
   } catch (error) {
     // Preserve stdout passthrough when the child output is not JSON.
   }
@@ -375,13 +499,7 @@ function probeProviders(root) {
   }
   try {
     const payload = JSON.parse(result.stdout);
-    if (Array.isArray(payload.warnings)) {
-      for (const warning of payload.warnings) {
-        const assistantName = warning.assistant_name || "specialist";
-        const message = warning.message || `${assistantName} failed; continuing in degraded mode.`;
-        process.stderr.write(`Warning: ${message}\n`);
-      }
-    }
+    printWarningsFromPayload(payload);
   } catch (error) {
     // Preserve stdout passthrough when the child output is not JSON.
   }
@@ -407,55 +525,100 @@ function native(root, passthroughArgs) {
   process.exit(result.status || 0);
 }
 
+function trace(root) {
+  const args = process.argv.slice(3);
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+    printTraceUsage("evcode");
+    process.exit(0);
+  }
+  const runId = valueForFlag(args, "--run-id", args.find((item) => !item.startsWith("--")) || "");
+  if (!runId) {
+    console.error("Missing run id for trace");
+    process.exit(1);
+  }
+  const artifactsRoot = valueForFlag(args, "--artifacts-root", root);
+  const sessionRoot = runtimeDisplay.resolveSessionRoot({ root, artifactsRoot, runId });
+  const summary = runtimeDisplay.loadRuntimeSummary(sessionRoot);
+  if (!summary) {
+    console.error(`Unable to locate runtime summary for run_id=${runId}`);
+    process.exit(1);
+  }
+  const events = runtimeDisplay.loadRuntimeEvents(summary?.artifacts?.runtime_events)
+    || runtimeDisplay.loadRuntimeEvents(path.join(sessionRoot, "runtime-events.jsonl"));
+  const resolvedEvents = events.length ? events : runtimeDisplay.synthesizeEventsFromSummary(summary);
+  if (hasFlag(args, "--json")) {
+    process.stdout.write(`${JSON.stringify({ summary, events: resolvedEvents }, null, 2)}\n`);
+    return;
+  }
+  const text = runtimeDisplay.renderRuntimeView(summary, resolvedEvents, {
+    isTTY: process.stdout.isTTY,
+    noColor: hasFlag(args, "--no-color"),
+    trace: true,
+    context: { runId },
+  });
+  process.stdout.write(`${text}\n`);
+}
+
 const root = path.resolve(__dirname, "../../..");
 const providerEnvState = providerRuntime.applyLocalProviderEnv(root, process.env);
-const internalCommands = new Set(["doctor", "status", "run", "assemble", "host-build", "native", "probe-providers"]);
+const internalCommands = new Set(["doctor", "status", "run", "trace", "assemble", "host-build", "native", "probe-providers"]);
 const command = process.argv[2] || "native";
 const jsonFlag = process.argv.includes("--json");
 
-if (command === "doctor") {
-  const result = doctor(root);
-  console.log(JSON.stringify(result, null, 2));
-  process.exit(result.ok ? 0 : 1);
-}
-
-if (command === "status") {
-  const result = status(root);
-  if (jsonFlag) {
+async function main() {
+  if (command === "doctor") {
+    const result = doctor(root);
     console.log(JSON.stringify(result, null, 2));
-  } else {
-    console.log(`EvCode | channel=${result.channel} | mode=${result.mode} | host=${result.host}`);
+    process.exit(result.ok ? 0 : 1);
   }
-  process.exit(0);
+
+  if (command === "status") {
+    const result = status(root);
+    if (jsonFlag) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      console.log(`EvCode | channel=${result.channel} | mode=${result.mode} | host=${result.host}`);
+    }
+    process.exit(0);
+  }
+
+  if (command === "run") {
+    await run(root);
+    process.exit(0);
+  }
+
+  if (command === "trace") {
+    trace(root);
+    process.exit(0);
+  }
+
+  if (command === "assemble") {
+    assemble(root);
+    process.exit(0);
+  }
+
+  if (command === "host-build") {
+    hostBuild(root);
+    process.exit(0);
+  }
+
+  if (command === "native") {
+    native(root, process.argv.slice(3));
+  }
+
+  if (command === "probe-providers") {
+    probeProviders(root);
+    process.exit(0);
+  }
+
+  if (!internalCommands.has(command)) {
+    native(root, process.argv.slice(2));
+  }
+
+  console.log("Usage: evcode [status|doctor|run|trace|assemble|host-build|native|probe-providers] [--json]");
 }
 
-if (command === "run") {
-  run(root);
-  process.exit(0);
-}
-
-if (command === "assemble") {
-  assemble(root);
-  process.exit(0);
-}
-
-if (command === "host-build") {
-  hostBuild(root);
-  process.exit(0);
-}
-
-if (command === "native") {
-  native(root, process.argv.slice(3));
-}
-
-if (command === "probe-providers") {
-  probeProviders(root);
-  process.exit(0);
-}
-
-if (!internalCommands.has(command)) {
-  native(root, process.argv.slice(2));
-}
-
-console.log("Usage: evcode [status|doctor|run|assemble|host-build|native|probe-providers] [--json]");
-process.exit(1);
+main().catch((error) => {
+  process.stderr.write(`${error.stack || error}\n`);
+  process.exit(1);
+});

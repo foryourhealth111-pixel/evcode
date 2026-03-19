@@ -1,0 +1,28 @@
+{
+  "run_id": "2026-03-19-evcode-gemini-activation-visibility-wave9",
+  "status": "pass",
+  "fresh_demo_run": "2026-03-19-evcode-gemini-activation-visibility-wave9-demo",
+  "activation_rule": {
+    "domain": "frontend_visual",
+    "risk_ceiling": "medium",
+    "requires_visual_evidence": true
+  },
+  "observed": {
+    "requested_delegate": "gemini",
+    "active_delegate": false,
+    "degraded_delegate": true,
+    "degraded_reason": "Specialist policy allows advisory delegation, but live invocation is not enabled. Codex remains the execution path."
+  },
+  "current_machine_state": {
+    "active_env_source": "none",
+    "gemini_api_key_present": false
+  },
+  "where_to_look": [
+    "top-level run JSON: specialist_routing.requested_delegates",
+    "top-level run JSON: specialist_routing.active_delegates",
+    "top-level run JSON: specialist_routing.degraded_delegates",
+    "session specialist artifacts: specialists/gemini-task-packet.json",
+    "session specialist artifacts: specialists/gemini-result.json",
+    "session specialist artifacts: specialists/codex-integration-receipt.json"
+  ]
+}

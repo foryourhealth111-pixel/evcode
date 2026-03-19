@@ -4,6 +4,7 @@ const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 const providerRuntime = require(path.join(__dirname, "../../../packages/provider-runtime/src/local_provider_env.js"));
+const runtimeDisplay = require(path.join(__dirname, "../../evcode/lib/runtime_display.js"));
 
 function loadJson(root, relativePath) {
   return JSON.parse(fs.readFileSync(path.join(root, relativePath), "utf8"));
@@ -17,9 +18,28 @@ function displayPath(root, candidate) {
   return relative;
 }
 
-function resolveSourceCodexHome() {
+function isSelfManagedCodexHome(root, candidate) {
+  if (!candidate) {
+    return false;
+  }
+  const resolvedCandidate = path.resolve(candidate);
+  const distRoot = path.resolve(root, ".evcode-dist");
+  const relativeToDist = path.relative(distRoot, resolvedCandidate);
+  if (relativeToDist === "standard/codex-home" || relativeToDist === "benchmark/codex-home") {
+    return true;
+  }
+  const parentName = path.basename(path.dirname(resolvedCandidate));
+  const baseName = path.basename(resolvedCandidate);
+  return baseName === "codex-home" && (parentName === "standard" || parentName === "benchmark");
+}
+
+function resolveSourceCodexHome(root) {
   const configured = process.env.EVCODE_SOURCE_CODEX_HOME || process.env.CODEX_HOME;
-  if (configured && fs.existsSync(path.join(configured, "config.toml"))) {
+  if (
+    configured
+    && !isSelfManagedCodexHome(root, configured)
+    && fs.existsSync(path.join(configured, "config.toml"))
+  ) {
     return configured;
   }
   const fallback = path.join(os.homedir(), ".codex");
@@ -42,7 +62,7 @@ function buildAssemblyArgs(root, passthroughArgs = []) {
     ...passthroughArgs
   ];
   if (!passthroughArgs.includes("--source-codex-home")) {
-    const sourceCodexHome = resolveSourceCodexHome();
+    const sourceCodexHome = resolveSourceCodexHome(root);
     if (sourceCodexHome) {
       args.push("--source-codex-home", sourceCodexHome);
     }
@@ -107,9 +127,21 @@ function buildProviderSetup(root) {
 }
 
 function printRunUsage(commandName) {
-  console.log(`Usage: ${commandName} run --task <task> [--workspace PATH] [--artifacts-root PATH]${commandName === "evcode-bench" ? " [--result-json PATH]" : ""} [--run-id ID]`);
+  console.log(`Usage: ${commandName} run --task <task> [--workspace PATH] [--artifacts-root PATH] [--result-json PATH] [--run-id ID] [--json]`);
 }
 
+function printTraceUsage(commandName) {
+  console.log(`Usage: ${commandName} trace <run-id> [--artifacts-root PATH] [--json]`);
+}
+
+function hasFlag(args, name) {
+  return args.includes(name);
+}
+
+function valueForFlag(args, name, fallback = "") {
+  const index = args.indexOf(name);
+  return index >= 0 ? args[index + 1] : fallback;
+}
 
 function status(root) {
   const distributions = loadJson(root, "config/distributions.json");
@@ -134,7 +166,7 @@ function status(root) {
     assistants: Object.keys(assistantPolicy.assistants),
     default_submission_preset: profile.default_submission_preset || null,
     assembled_distribution_exists: fs.existsSync(path.join(root, ".evcode-dist", "benchmark", "bin", "evcode-bench")),
-    source_codex_home: resolveSourceCodexHome(),
+    source_codex_home: resolveSourceCodexHome(root),
     bundled_host_available: Boolean(resolveBundledHost(root)),
     baseline_surface: buildBaselineSurface(root, profile),
     provider_setup: buildProviderSetup(root),
@@ -146,9 +178,8 @@ function status(root) {
 
 function run(root) {
   const args = process.argv.slice(3);
-  const taskIndex = args.indexOf("--task");
-  const task = taskIndex >= 0 ? args[taskIndex + 1] : "";
-  if (args.includes("--help") || args.includes("-h")) {
+  const task = valueForFlag(args, "--task");
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
     printRunUsage("evcode-bench");
     process.exit(0);
   }
@@ -156,16 +187,10 @@ function run(root) {
     console.error("Missing --task for run");
     process.exit(1);
   }
-  const workspaceIndex = args.indexOf("--workspace");
-  const artifactsRootIndex = args.indexOf("--artifacts-root");
-  const runIdIndex = args.indexOf("--run-id");
-  const resultJsonIndex = args.indexOf("--result-json");
-  const workspace = workspaceIndex >= 0 ? args[workspaceIndex + 1] : root;
-  const artifactsRoot = artifactsRootIndex >= 0
-    ? args[artifactsRootIndex + 1]
-    : fs.mkdtempSync(path.join(os.tmpdir(), "evcode-bench-artifacts-"));
-  const runId = runIdIndex >= 0 ? args[runIdIndex + 1] : "";
-  const resultJson = resultJsonIndex >= 0 ? args[resultJsonIndex + 1] : "";
+  const workspace = valueForFlag(args, "--workspace", root);
+  const artifactsRoot = valueForFlag(args, "--artifacts-root", fs.mkdtempSync(path.join(os.tmpdir(), "evcode-bench-artifacts-")));
+  const runId = valueForFlag(args, "--run-id", runtimeDisplay.createRunId("evcode-bench"));
+  const resultJson = valueForFlag(args, "--result-json", "");
   const result = spawnSync(
     "python3",
     [
@@ -184,7 +209,8 @@ function run(root) {
       workspace,
       "--artifacts-root",
       artifactsRoot,
-      ...(runId ? ["--run-id", runId] : []),
+      "--run-id",
+      runId,
       ...(resultJson ? ["--result-json", resultJson] : []),
     ],
     { encoding: "utf8" }
@@ -267,9 +293,43 @@ function native(root, passthroughArgs) {
   process.exit(result.status || 0);
 }
 
+function trace(root) {
+  const args = process.argv.slice(3);
+  if (hasFlag(args, "--help") || hasFlag(args, "-h")) {
+    printTraceUsage("evcode-bench");
+    process.exit(0);
+  }
+  const runId = valueForFlag(args, "--run-id", args.find((item) => !item.startsWith("--")) || "");
+  if (!runId) {
+    console.error("Missing run id for trace");
+    process.exit(1);
+  }
+  const artifactsRoot = valueForFlag(args, "--artifacts-root", root);
+  const sessionRoot = runtimeDisplay.resolveSessionRoot({ root, artifactsRoot, runId });
+  const summary = runtimeDisplay.loadRuntimeSummary(sessionRoot);
+  if (!summary) {
+    console.error(`Unable to locate runtime summary for run_id=${runId}`);
+    process.exit(1);
+  }
+  const events = runtimeDisplay.loadRuntimeEvents(summary?.artifacts?.runtime_events)
+    || runtimeDisplay.loadRuntimeEvents(path.join(sessionRoot, "runtime-events.jsonl"));
+  const resolvedEvents = events.length ? events : runtimeDisplay.synthesizeEventsFromSummary(summary);
+  if (hasFlag(args, "--json")) {
+    process.stdout.write(`${JSON.stringify({ summary, events: resolvedEvents }, null, 2)}\n`);
+    return;
+  }
+  const text = runtimeDisplay.renderRuntimeView(summary, resolvedEvents, {
+    isTTY: process.stdout.isTTY,
+    noColor: hasFlag(args, "--no-color"),
+    trace: true,
+    context: { runId },
+  });
+  process.stdout.write(`${text}\n`);
+}
+
 const root = path.resolve(__dirname, "../../..");
 const providerEnvState = providerRuntime.applyLocalProviderEnv(root, process.env);
-const internalCommands = new Set(["status", "run", "assemble", "host-build", "native", "probe-providers"]);
+const internalCommands = new Set(["status", "run", "trace", "assemble", "host-build", "native", "probe-providers"]);
 const command = process.argv[2] || "native";
 const jsonFlag = process.argv.includes("--json");
 
@@ -285,6 +345,11 @@ if (command === "status") {
 
 if (command === "run") {
   run(root);
+  process.exit(0);
+}
+
+if (command === "trace") {
+  trace(root);
   process.exit(0);
 }
 
@@ -311,5 +376,5 @@ if (!internalCommands.has(command)) {
   native(root, process.argv.slice(2));
 }
 
-console.log("Usage: evcode-bench [status|run|assemble|host-build|native|probe-providers] [--json]");
+console.log("Usage: evcode-bench [status|run|trace|assemble|host-build|native|probe-providers] [--json]");
 process.exit(1);

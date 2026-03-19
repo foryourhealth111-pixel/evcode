@@ -164,7 +164,7 @@ foreach ($pack in $manifest.packs) {
     }
 }
 
-$presentSkills = Get-ChildItem -LiteralPath $SkillsRoot -Directory | Select-Object -ExpandProperty Name
+$presentSkills = Get-ChildItem -LiteralPath $SkillsRoot -Force -Directory | Select-Object -ExpandProperty Name
 $presentSet = New-CaseInsensitiveSet
 foreach ($name in $presentSkills) {
     [void]$presentSet.Add($name)
